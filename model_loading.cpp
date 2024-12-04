@@ -17,6 +17,7 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
+void updateCamera();
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -33,6 +34,8 @@ float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
 Model *ourModel;
+glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f); // Adjust for desired fixed distance and height
+
 int main() {
     // glfw: initialize and configure
     // ------------------------------
@@ -92,40 +95,42 @@ int main() {
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
-        // per-frame time logic
+        // Timing
         float currentFrame = glfwGetTime();
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // input
+        // Input handling
         processInput(window);
 
-        // render
+        // Update camera to follow ourModel
+        camera.updateCameraVectors(ourModel->GetPosition(), 10.0f);
+
+        // Rendering
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // activate shader
         ourShader.use();
 
-        // view/projection transformations
+        // Projection and View Matrices
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
 
-        // model transformation
+        // Render ourModel
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, ourModel->GetPosition());
-        model = glm::rotate(model, glm::radians(ourModel->GetRotation().x), glm::vec3(1.0f, 0.0f, 0.0f));
-        model = glm::rotate(model, glm::radians(ourModel->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f));
-        model = glm::rotate(model, glm::radians(ourModel->GetRotation().z), glm::vec3(0.0f, 0.0f, 1.0f));
         ourShader.setMat4("model", model);
-
-        // render the model
         ourModel->Draw(ourShader);
+
+        // Render newModel independently
+        glm::mat4 newModelMatrix = glm::mat4(1.0f);
+        newModelMatrix = glm::translate(newModelMatrix, newModel->GetPosition());
+        ourShader.setMat4("model", newModelMatrix);
         newModel->Draw(ourShader);
 
-        // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
+        // Swap buffers and poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
     }
@@ -143,14 +148,22 @@ void processInput(GLFWwindow *window) {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
+    glm::vec3 moveDirection(0.0f);
+    float speed = 5.0f * deltaTime; // Adjust speed as necessary
+
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
+        moveDirection += camera.Front; // Move forward relative to the camera
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
+        moveDirection -= camera.Front; // Move backward relative to the camera
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        camera.ProcessKeyboard(LEFT, deltaTime);
+        moveDirection -= camera.Right; // Move left relative to the camera
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        camera.ProcessKeyboard(RIGHT, deltaTime);
+        moveDirection += camera.Right; // Move right relative to the camera
+
+    if (glm::length(moveDirection) > 0.0f) {
+        moveDirection = glm::normalize(moveDirection); // Normalize to ensure consistent movement speed
+        ourModel->SetPosition(ourModel->GetPosition() + moveDirection * speed);
+    }
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -179,11 +192,20 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
     lastX = xpos;
     lastY = ypos;
 
-    camera.ProcessMouseMovement(xoffset, yoffset);
+    float distance = 5.0f; // Set the desired distance from the model
+    // Pass model position and distance to ProcessMouseMovement
+    camera.ProcessMouseMovement(xoffset, yoffset, ourModel->GetPosition(), distance);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
+}
+void updateCamera() {
+    glm::vec3 modelPosition = ourModel->GetPosition();
+    float distance = 10.0f; // Desired fixed distance from the model
+    camera.Position = modelPosition + cameraOffset;
+    camera.Front = glm::normalize(modelPosition - camera.Position);
+    camera.updateCameraVectors();
 }

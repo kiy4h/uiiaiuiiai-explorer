@@ -100,22 +100,21 @@ public:
             Position -= WorldUp * velocity;
     }
 
-    // ��������ƶ�
-    void ProcessMouseMovement(float xoffset, float yoffset) {
+    void ProcessMouseMovement(float xoffset, float yoffset, glm::vec3 modelPosition, float distance) {
         xoffset *= MouseSensitivity;
         yoffset *= MouseSensitivity;
 
         Yaw -= xoffset;
-        Pitch += yoffset;
+        Pitch -= yoffset;
 
-        // ���ƽǶ��Ա��ⷭת����
+        // Constrain the pitch to prevent flipping
         if (Pitch > 89.0f)
             Pitch = 89.0f;
         if (Pitch < -89.0f)
             Pitch = -89.0f;
 
-        // ʹ��ŷ���Ǹ��� Front��Up��Right ����
-        updateCameraVectors();
+        // Update camera vectors with model position and distance
+        updateCameraVectors(modelPosition, distance);
     }
 
     // �����������������
@@ -151,21 +150,7 @@ public:
         if (Zoom > ZOOM)
             Zoom -= ZOOM_SPEED / 2;
     }
-    // // Calculates the front vector from the Camera's (updated) Euler Angles
-    // void UpdateCameraVectors() {
-    //     // Calculate the new Front vector
-    //     glm::vec3 front;
-    //     front.x = cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    //     front.y = sin(glm::radians(Pitch));
-    //     front.z = sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    //     Front = glm::normalize(front);
-    //     // Also re-calculate the Right and Up vector
-    //     Right = glm::normalize(glm::cross(Front, WorldUp)); // Normalize the vectors, because their length gets closer to 0 the more you look up or down which results in slower movement.
-    //     Up = glm::normalize(glm::cross(Right, Front));
-    // }
 
-private:
-    // ͨ�������ŷ���Ǽ��� Front��Right��Up ����
     void updateCameraVectors() {
         // �����µ� Front ����
         glm::vec3 front;
@@ -177,6 +162,24 @@ private:
         Right = glm::normalize(glm::cross(Front, WorldUp));
         Up = glm::normalize(glm::cross(Right, Front));
     }
+
+    void updateCameraVectors(glm::vec3 modelPosition, float distance) {
+        // Calculate the offset using spherical coordinates
+        glm::vec3 offset;
+        offset.x = distance * cos(glm::radians(Pitch)) * sin(glm::radians(Yaw));
+        offset.y = distance * sin(glm::radians(Pitch));
+        offset.z = distance * cos(glm::radians(Pitch)) * cos(glm::radians(Yaw));
+
+        // Update the camera's position relative to the model
+        Position = modelPosition + offset;
+
+        // Ensure the camera points at the model
+        Front = glm::normalize(modelPosition - Position);
+        Right = glm::normalize(glm::cross(Front, WorldUp));
+        Up = glm::normalize(glm::cross(Right, Front));
+    }
+
+private:
 };
 
 #endif
