@@ -108,8 +108,8 @@ float Terrain::getHeightAt(int x, int z) const {
     z = clamp(z, 0, heightmapHeight - 1);
 
     // Debug output for heightmap values
-    std::cout << "Heightmap value at (" << x << ", " << z << "): "
-              << (int)heightmapData[z * heightmapWidth + x] << std::endl;
+    // std::cout << "Heightmap value at (" << x << ", " << z << "): "
+    //           << (int)heightmapData[z * heightmapWidth + x] << std::endl;
 
     // Return the height by reading the pixel value and scaling it
     return terrainScale * (heightmapData[z * heightmapWidth + x] / 255.0f);

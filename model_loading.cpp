@@ -186,11 +186,16 @@ void processInput(GLFWwindow *window) {
         moveDirection = glm::normalize(moveDirection); // Normalize the direction vector
 
         // Update only XZ position of ourModel
-        glm::vec3 currentPosition = ourModel->GetPosition();
-        ourModel->SetPosition(glm::vec3(
-            currentPosition.x + moveDirection.x * speed,
-            currentPosition.y, // Keep Y unchanged
-            currentPosition.z + moveDirection.z * speed));
+        glm::vec3 newPosition = ourModel->GetPosition() + moveDirection.x * speed;
+        float terrainHeight = terrain->getHeightAt((int)newPosition.x, (int)newPosition.z);
+
+        // Clamp the model's position to stay within terrain bounds (no XZ position outside terrain limits)
+        newPosition.x = glm::clamp(newPosition.x, 0.0f, (float)(terrain->getWidth() - 1));
+        newPosition.z = glm::clamp(newPosition.z, 0.0f, (float)(terrain->getHeight() - 1));
+        newPosition.y = terrainHeight;
+
+        // Set the new position for ourModel
+        ourModel->SetPosition(newPosition);
 
         // Calculate the angle to rotate the model based on the movement direction
         float targetAngle = glm::atan(moveDirection.z, moveDirection.x); // Get angle in radians (on the XZ plane)
