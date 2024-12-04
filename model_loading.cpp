@@ -4,6 +4,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "camera.h"
@@ -120,7 +121,8 @@ int main() {
 
         // Render ourModel
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, ourModel->GetPosition());
+        model = glm::translate(model, ourModel->GetPosition());                                           // Apply position
+        model = glm::rotate(model, glm::radians(ourModel->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f)); // Apply rotation
         ourShader.setMat4("model", model);
         ourModel->Draw(ourShader);
 
@@ -151,18 +153,32 @@ void processInput(GLFWwindow *window) {
     glm::vec3 moveDirection(0.0f);
     float speed = 5.0f * deltaTime; // Adjust speed as necessary
 
+    // Calculate movement direction based on camera orientation
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        moveDirection += camera.Front; // Move forward relative to the camera
+        moveDirection += glm::vec3(camera.Front.x, 0.0f, camera.Front.z); // Ignore Y component
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        moveDirection -= camera.Front; // Move backward relative to the camera
+        moveDirection -= glm::vec3(camera.Front.x, 0.0f, camera.Front.z); // Ignore Y component
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        moveDirection -= camera.Right; // Move left relative to the camera
+        moveDirection -= glm::vec3(camera.Right.x, 0.0f, camera.Right.z); // Ignore Y component
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        moveDirection += camera.Right; // Move right relative to the camera
+        moveDirection += glm::vec3(camera.Right.x, 0.0f, camera.Right.z); // Ignore Y component
 
     if (glm::length(moveDirection) > 0.0f) {
-        moveDirection = glm::normalize(moveDirection); // Normalize to ensure consistent movement speed
-        ourModel->SetPosition(ourModel->GetPosition() + moveDirection * speed);
+        moveDirection = glm::normalize(moveDirection); // Normalize the direction vector
+
+        // Update only XZ position of ourModel
+        glm::vec3 currentPosition = ourModel->GetPosition();
+        ourModel->SetPosition(glm::vec3(
+            currentPosition.x + moveDirection.x * speed,
+            currentPosition.y, // Keep Y unchanged
+            currentPosition.z + moveDirection.z * speed));
+
+        // Calculate the angle to rotate the model based on the movement direction
+        float angle = glm::atan(moveDirection.z, moveDirection.x); // Get angle in radians (on the XZ plane)
+
+        // Set model rotation around Y-axis (turn to face the direction it's moving)
+        // Ensure the rotation is applied correctly
+        ourModel->SetRotation(glm::vec3(0.0f, glm::degrees(angle), 0.0f)); // Rotate around Y-axis
     }
 }
 
