@@ -12,39 +12,38 @@
 class Shader {
 public:
     unsigned int ID;
-    // ¹¹Ôìº¯Êý£¬Éú³É¶¯Ì¬×ÅÉ«Æ÷
+    // ï¿½ï¿½ï¿½ìº¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¶ï¿½Ì¬ï¿½ï¿½É«ï¿½ï¿½
     // ------------------------------------------------------------------------
-    Shader(const char* vertexPath, const char* fragmentPath)
-    {
-        // 1. ´ÓfilePath¼ìË÷¶¥µã/Æ¬ÔªµÄÔ´´úÂë
+    Shader(const char *vertexPath, const char *fragmentPath) {
+        // 1. ï¿½ï¿½filePathï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/Æ¬Ôªï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½
         std::string vertexCode;
         std::string fragmentCode;
         std::ifstream vShaderFile;
         std::ifstream fShaderFile;
-        // È·±£ifstream¶ÔÏó¿ÉÒÔÅ×³öÒì³£
+        // È·ï¿½ï¿½ifstreamï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×³ï¿½ï¿½ì³£
         vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         try {
-            // ´ò¿ªÎÄ¼þ¼Ð
+            // ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
             vShaderFile.open(vertexPath);
             fShaderFile.open(fragmentPath);
             std::stringstream vShaderStream, fShaderStream;
-            // ¶ÁÎÄ¼þµÄ»º³åÇøµÄÄÚÈÝµ½Á÷
+            // ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ýµï¿½ï¿½ï¿½
             vShaderStream << vShaderFile.rdbuf();
             fShaderStream << fShaderFile.rdbuf();
-            // ¹Ø±ÕÎÄ¼þ´¦Àí³ÌÐò
+            // ï¿½Ø±ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             vShaderFile.close();
             fShaderFile.close();
-            // ½«Á÷×ª»»³É×Ö·û´®
+            // ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½
             vertexCode = vShaderStream.str();
             fragmentCode = fShaderStream.str();
         } catch (std::ifstream::failure e) {
             std::cout << "ERROR::SHADER::FILE_NOT_SUCCESFULLY_READ" << std::endl;
         }
-        const char* vShaderCode = vertexCode.c_str();
-        const char* fShaderCode = fragmentCode.c_str();
+        const char *vShaderCode = vertexCode.c_str();
+        const char *fShaderCode = fragmentCode.c_str();
 
-        // 2. ±àÒë Shader
+        // 2. ï¿½ï¿½ï¿½ï¿½ Shader
         unsigned int vertex, fragment;
         // vertex shader
         vertex = glCreateShader(GL_VERTEX_SHADER);
@@ -62,80 +61,66 @@ public:
         glAttachShader(ID, fragment);
         glLinkProgram(ID);
         checkCompileErrors(ID, "PROGRAM");
-        // É¾³ý×ÅÉ«Æ÷£¬ÒòÎª×ÅÉ«Æ÷ÒÑ¾­Á¬½Óµ½ÏîÄ¿ÖÐÁË
+        // É¾ï¿½ï¿½ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½É«ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ï¿½
         glDeleteShader(vertex);
         glDeleteShader(fragment);
     }
-    // ¼¤»î Shader
+    // ï¿½ï¿½ï¿½ï¿½ Shader
     // ------------------------------------------------------------------------
-    void use() const
-    {
+    void use() const {
         glUseProgram(ID);
     }
-    // Ò»Ð©°ü×°ºÃµÄ¡¢ÊµÓÃµÄ Uniform º¯Êý
+    // Ò»Ð©ï¿½ï¿½×°ï¿½ÃµÄ¡ï¿½Êµï¿½Ãµï¿½ Uniform ï¿½ï¿½ï¿½ï¿½
     // ------------------------------------------------------------------------
-    void setBool(const std::string& name, bool value) const
-    {
+    void setBool(const std::string &name, bool value) const {
         glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value);
     }
     // ------------------------------------------------------------------------
-    void setInt(const std::string& name, int value) const
-    {
+    void setInt(const std::string &name, int value) const {
         glUniform1i(glGetUniformLocation(ID, name.c_str()), value);
     }
     // ------------------------------------------------------------------------
-    void setFloat(const std::string& name, float value) const
-    {
+    void setFloat(const std::string &name, float value) const {
         glUniform1f(glGetUniformLocation(ID, name.c_str()), value);
     }
     // ------------------------------------------------------------------------
-    void setVec2(const std::string& name, const glm::vec2& value) const
-    {
+    void setVec2(const std::string &name, const glm::vec2 &value) const {
         glUniform2fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
     }
-    void setVec2(const std::string& name, float x, float y) const
-    {
+    void setVec2(const std::string &name, float x, float y) const {
         glUniform2f(glGetUniformLocation(ID, name.c_str()), x, y);
     }
     // ------------------------------------------------------------------------
-    void setVec3(const std::string& name, const glm::vec3& value) const
-    {
+    void setVec3(const std::string &name, const glm::vec3 &value) const {
         glUniform3fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
     }
-    void setVec3(const std::string& name, float x, float y, float z) const
-    {
+    void setVec3(const std::string &name, float x, float y, float z) const {
         glUniform3f(glGetUniformLocation(ID, name.c_str()), x, y, z);
     }
     // ------------------------------------------------------------------------
-    void setVec4(const std::string& name, const glm::vec4& value) const
-    {
+    void setVec4(const std::string &name, const glm::vec4 &value) const {
         glUniform4fv(glGetUniformLocation(ID, name.c_str()), 1, &value[0]);
     }
-    void setVec4(const std::string& name, float x, float y, float z, float w) const
-    {
+    void setVec4(const std::string &name, float x, float y, float z, float w) const {
         glUniform4f(glGetUniformLocation(ID, name.c_str()), x, y, z, w);
     }
     // ------------------------------------------------------------------------
-    void setMat2(const std::string& name, const glm::mat2& mat) const
-    {
+    void setMat2(const std::string &name, const glm::mat2 &mat) const {
         glUniformMatrix2fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
     }
     // ------------------------------------------------------------------------
-    void setMat3(const std::string& name, const glm::mat3& mat) const
-    {
+    void setMat3(const std::string &name, const glm::mat3 &mat) const {
         glUniformMatrix3fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
     }
     // ------------------------------------------------------------------------
-    void setMat4(const std::string& name, const glm::mat4& mat) const
-    {
+    void setMat4(const std::string &name, const glm::mat4 &mat) const {
         glUniformMatrix4fv(glGetUniformLocation(ID, name.c_str()), 1, GL_FALSE, &mat[0][0]);
     }
 
 private:
-    // ¼ì²é²ÄÖÊ±àÒë/Á´½Ó´íÎóµÄº¯Êý
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½Ó´ï¿½ï¿½ï¿½Äºï¿½ï¿½ï¿½
     // ------------------------------------------------------------------------
-    void checkCompileErrors(GLuint shader, std::string type)
-    {
+    void checkCompileErrors(GLuint shader, std::string type) {
         GLint success;
         GLchar infoLog[1024];
         if (type != "PROGRAM") {
@@ -155,4 +140,5 @@ private:
         }
     }
 };
+
 #endif

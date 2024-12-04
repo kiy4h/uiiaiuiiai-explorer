@@ -11,6 +11,7 @@
 #include "filesystem.h"
 #include "model.h"
 #include "shader_m.h"
+#include "terrain.h"
 
 #include <iostream>
 
@@ -34,29 +35,35 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+GLuint terrainVAO;
 Model *ourModel;
+Terrain *terrain;
 glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f); // Adjust for desired fixed distance and height
 
 int main() {
-    // glfw: initialize and configure
-    // ------------------------------
-    glfwInit();
+
+    // Initialize GLFW
+    if (!glfwInit()) {
+        std::cerr << "GLFW initialization failed!" << std::endl;
+        return -1;
+    }
+
+    // Request OpenGL 3.3 context
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-    // glfw window creation
-    // --------------------
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
-    if (window == NULL) {
-        std::cout << "Failed to create GLFW window" << std::endl;
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Terrain Example", nullptr, nullptr);
+    if (!window) {
+        std::cerr << "Failed to create GLFW window!" << std::endl;
         glfwTerminate();
         return -1;
     }
+
+    // Make the window's context current
+    glfwMakeContextCurrent(window);
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
+        glViewport(0, 0, width, height);
+    });
+
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
     glfwSetCursorPosCallback(window, mouse_callback);
@@ -90,6 +97,9 @@ int main() {
     ourModel = new Model(FileSystem::getPath("oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
     ourModel->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     newModel->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+
+    // Create the terrain using the heightmap
+    terrain = new Terrain("height-map.png", 10.0f, 256, 256); // Use your heightmap path and size
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -132,6 +142,9 @@ int main() {
         ourShader.setMat4("model", newModelMatrix);
         newModel->Draw(ourShader);
 
+        // Render the terrain
+        terrain->render();
+
         // Swap buffers and poll events
         glfwSwapBuffers(window);
         glfwPollEvents();
@@ -140,8 +153,14 @@ int main() {
     // glfw: terminate, clearing all previously allocated GLFW resources.
     // ------------------------------------------------------------------
     glfwTerminate();
+    delete terrain;
     delete ourModel;
     return 0;
+}
+
+// Simple linear interpolation for floats
+float lerp(float a, float b, float t) {
+    return a + t * (b - a);
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
@@ -174,11 +193,23 @@ void processInput(GLFWwindow *window) {
             currentPosition.z + moveDirection.z * speed));
 
         // Calculate the angle to rotate the model based on the movement direction
-        float angle = glm::atan(moveDirection.z, moveDirection.x); // Get angle in radians (on the XZ plane)
+        float targetAngle = glm::atan(moveDirection.z, moveDirection.x); // Get angle in radians (on the XZ plane)
 
-        // Set model rotation around Y-axis (turn to face the direction it's moving)
-        // Ensure the rotation is applied correctly
-        ourModel->SetRotation(glm::vec3(0.0f, glm::degrees(angle), 0.0f)); // Rotate around Y-axis
+        // Glide the rotation smoothly by interpolating between current and target angles
+        float currentAngle = glm::radians(ourModel->GetRotation().y); // Get current Y rotation in radians
+
+        // Smoothing factor (0.1f is a good starting point, adjust for more/less glide)
+        float smoothFactor = 0.1f;
+
+        // Interpolate between current angle and target angle for smooth rotation using custom lerp
+        float newAngle = lerp(currentAngle, targetAngle, smoothFactor);
+
+        // Apply the smooth rotation with an optional Y-rotation offset (e.g., 90 degrees)
+        float offset = glm::radians(-90.0f); // You can adjust this value for a different offset
+        newAngle += offset;                  // Add the Y-rotation offset to the target angle
+
+        // Set the model's rotation
+        ourModel->SetRotation(glm::vec3(0.0f, glm::degrees(newAngle), 0.0f)); // Rotate around Y-axis
     }
 }
 
