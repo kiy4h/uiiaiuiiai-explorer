@@ -14,7 +14,7 @@
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
                 "-lglfw3",
-                "-lglew32",
+                // "-lglew32",
                 "-lopengl32",
                 "-lgdi32",
                 "-lassimp",

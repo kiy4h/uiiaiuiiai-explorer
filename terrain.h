@@ -3,7 +3,7 @@
 
 #include <glad/glad.h> // For OpenGL extensions
 #include <glm/glm.hpp>
-#include <stb_image.h> // For loading PNG heightmap images
+#include <stb/stb_image.h> // For loading PNG heightmap images
 #include <string>
 #include <vector>
 

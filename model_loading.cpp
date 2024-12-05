@@ -34,6 +34,7 @@ bool firstMouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+int isRotate;
 
 GLuint terrainVAO;
 Model *ourModel;
@@ -89,6 +90,7 @@ int main() {
     // build and compile shaders
     // -------------------------
     Shader ourShader("1.model_loading.vs", "1.model_loading.fs");
+    // Shader terrainShader("1.model_loading.vs", "terrain.fs");
 
     // load models
     // -----------
@@ -103,6 +105,8 @@ int main() {
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    isRotate = 0;
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
@@ -122,6 +126,7 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         ourShader.use();
+        // terrainShader.use();
 
         // Projection and View Matrices
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
@@ -143,7 +148,9 @@ int main() {
         newModel->Draw(ourShader);
 
         // Render the terrain
-        terrain->render();
+        // glm::mat4 terrainModel = glm::mat4(1.0f);     // Identity matrix for terrain
+        // terrainShader.setMat4("model", terrainModel); // Pass the model matrix for terrain
+        terrain->render(); // Render the terrain mesh
 
         // Swap buffers and poll events
         glfwSwapBuffers(window);
@@ -170,51 +177,76 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window, true);
 
     glm::vec3 moveDirection(0.0f);
-    float speed = 5.0f * deltaTime; // Adjust speed as necessary
+    float speed = 5.0f * deltaTime; // Adjust speed as needed
 
-    // Calculate movement direction based on camera orientation
+    // Flatten the camera's Front and Right vectors for movement on the XZ plane
+    glm::vec3 frontXZ = glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z));
+    glm::vec3 rightXZ = glm::normalize(glm::vec3(camera.Right.x, 0.0f, camera.Right.z));
+
+    // Add/subtract movement directions based on input
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        moveDirection += glm::vec3(camera.Front.x, 0.0f, camera.Front.z); // Ignore Y component
+        moveDirection += frontXZ; // Forward
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        moveDirection -= glm::vec3(camera.Front.x, 0.0f, camera.Front.z); // Ignore Y component
+        moveDirection -= frontXZ; // Backward
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        moveDirection -= glm::vec3(camera.Right.x, 0.0f, camera.Right.z); // Ignore Y component
+        moveDirection -= rightXZ; // Left
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        moveDirection += glm::vec3(camera.Right.x, 0.0f, camera.Right.z); // Ignore Y component
+        moveDirection += rightXZ; // Right
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) isRotate = isRotate ? 0 : 1;
 
+    // Normalize the movement direction if there's input
     if (glm::length(moveDirection) > 0.0f) {
-        moveDirection = glm::normalize(moveDirection); // Normalize the direction vector
+        moveDirection = glm::normalize(moveDirection); // Ensure uniform speed
 
-        // Update only XZ position of ourModel
-        glm::vec3 newPosition = ourModel->GetPosition() + moveDirection.x * speed;
+        glm::vec3 currentPosition = ourModel->GetPosition();
+        glm::vec3 newPosition = currentPosition + moveDirection * speed;
+
+        // Keep the model on top of the terrain
         float terrainHeight = terrain->getHeightAt((int)newPosition.x, (int)newPosition.z);
-
-        // Clamp the model's position to stay within terrain bounds (no XZ position outside terrain limits)
-        newPosition.x = glm::clamp(newPosition.x, 0.0f, (float)(terrain->getWidth() - 1));
-        newPosition.z = glm::clamp(newPosition.z, 0.0f, (float)(terrain->getHeight() - 1));
         newPosition.y = terrainHeight;
 
-        // Set the new position for ourModel
+        // Clamp position to stay within terrain bounds
+        newPosition.x = glm::clamp(newPosition.x, 0.0f, (float)(terrain->getWidth() - 1));
+        newPosition.z = glm::clamp(newPosition.z, 0.0f, (float)(terrain->getHeight() - 1));
+        // Set the model's new position
         ourModel->SetPosition(newPosition);
 
-        // Calculate the angle to rotate the model based on the movement direction
-        float targetAngle = glm::atan(moveDirection.z, moveDirection.x); // Get angle in radians (on the XZ plane)
+        // Calculate target rotation (yaw angle) based on moveDirection
+        float targetYaw = glm::degrees(glm::atan(moveDirection.z, moveDirection.x));
+        if (isRotate) {
 
-        // Glide the rotation smoothly by interpolating between current and target angles
-        float currentAngle = glm::radians(ourModel->GetRotation().y); // Get current Y rotation in radians
+            // Get the current yaw angle of the model
+            float currentYaw = ourModel->GetRotation().y;
 
-        // Smoothing factor (0.1f is a good starting point, adjust for more/less glide)
-        float smoothFactor = 0.1f;
+            // Ensure angles are in the range [0, 360)
+            targetYaw = fmod(targetYaw + 360.0f, 360.0f);
+            currentYaw = fmod(currentYaw + 360.0f, 360.0f);
 
-        // Interpolate between current angle and target angle for smooth rotation using custom lerp
-        float newAngle = lerp(currentAngle, targetAngle, smoothFactor);
+            // Determine the shortest direction to rotate
+            float rotationSpeed = 400.0f * deltaTime; // Adjust speed (degrees per second)
+            currentYaw += rotationSpeed;
 
-        // Apply the smooth rotation with an optional Y-rotation offset (e.g., 90 degrees)
-        float offset = glm::radians(-90.0f); // You can adjust this value for a different offset
-        newAngle += offset;                  // Add the Y-rotation offset to the target angle
+            // Wrap currentYaw back to [0, 360) if needed
+            currentYaw = fmod(currentYaw + 360.0f, 360.0f);
 
-        // Set the model's rotation
-        ourModel->SetRotation(glm::vec3(0.0f, glm::degrees(newAngle), 0.0f)); // Rotate around Y-axis
+            // Update model's rotation (yaw only)
+            ourModel->SetRotation(glm::vec3(0.0f, currentYaw, 0.0f));
+
+            // std::cout << "Current Yaw: " << currentYaw
+            //           << ", Target Yaw: " << targetYaw
+            //           << ", Rotation Speed: " << rotationSpeed << std::endl;
+        } else {
+            // TODO: fix model direction.
+            // Get the current yaw angle of the model
+            float currentYaw = ourModel->GetRotation().y;
+
+            // Smoothly interpolate (lerp) between current and target yaw angles
+            float smoothFactor = 0.1f; // Adjust for more/less smoothness
+            float newYaw = glm::mix(currentYaw, targetYaw + 90, smoothFactor);
+
+            // Update model's rotation (yaw only)
+            ourModel->SetRotation(glm::vec3(0.0f, newYaw, 0.0f));
+        }
     }
 }
 
@@ -259,5 +291,5 @@ void updateCamera() {
     float distance = 10.0f; // Desired fixed distance from the model
     camera.Position = modelPosition + cameraOffset;
     camera.Front = glm::normalize(modelPosition - camera.Position);
-    camera.updateCameraVectors();
+    // camera.updateCameraVectors();
 }

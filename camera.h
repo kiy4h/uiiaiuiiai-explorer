@@ -56,7 +56,7 @@ public:
         WorldUp = up;
         Yaw = yaw;
         Pitch = pitch;
-        updateCameraVectors();
+        // updateCameraVectors();
     }
 
     // ���캯���ͱ���ֵ
@@ -70,7 +70,7 @@ public:
         WorldUp = glm::vec3(upX, upY, upZ);
         Yaw = yaw;
         Pitch = pitch;
-        updateCameraVectors();
+        // updateCameraVectors();
     }
 
     // ������ͼ����
@@ -114,7 +114,7 @@ public:
             Pitch = -89.0f;
 
         // Update camera vectors with model position and distance
-        updateCameraVectors(modelPosition, distance);
+        // updateCameraVectors(modelPosition, distance);
     }
 
     // �����������������
@@ -131,7 +131,7 @@ public:
         Position = position;
         Yaw = yaw;
         Pitch = 0.0f;
-        updateCameraVectors();
+        // updateCameraVectors();
     }
 
     void ZoomIn() {
@@ -151,17 +151,17 @@ public:
             Zoom -= ZOOM_SPEED / 2;
     }
 
-    void updateCameraVectors() {
-        // �����µ� Front ����
-        glm::vec3 front;
-        front.x = -sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-        front.y = sin(glm::radians(Pitch));
-        front.z = -cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-        Front = glm::normalize(front);
-        // ���¼��� Right �� Up ����
-        Right = glm::normalize(glm::cross(Front, WorldUp));
-        Up = glm::normalize(glm::cross(Right, Front));
-    }
+    // void updateCameraVectors() {
+    //     // �����µ� Front ����
+    //     glm::vec3 front;
+    //     front.x = -sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+    //     front.y = sin(glm::radians(Pitch));
+    //     front.z = -cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
+    //     Front = glm::normalize(front);
+    //     // ���¼��� Right �� Up ����
+    //     Right = glm::normalize(glm::cross(Front, WorldUp));
+    //     Up = glm::normalize(glm::cross(Right, Front));
+    // }
 
     void updateCameraVectors(glm::vec3 modelPosition, float distance) {
         // Calculate the offset using spherical coordinates
@@ -174,9 +174,18 @@ public:
         Position = modelPosition + offset;
 
         // Ensure the camera points at the model
-        Front = glm::normalize(modelPosition - Position);
+        Front = glm::normalize(modelPosition - Position); // Look at the model
+
+        // Calculate the Right vector (perpendicular to Front and WorldUp)
         Right = glm::normalize(glm::cross(Front, WorldUp));
+
+        // Recalculate the Up vector (perpendicular to Right and Front)
         Up = glm::normalize(glm::cross(Right, Front));
+
+        // Debug output to verify the vectors (optional)
+        // std::cout << "Camera Front: " << Front.x << ", " << Front.y << ", " << Front.z << std::endl;
+        // std::cout << "Camera Right: " << Right.x << ", " << Right.y << ", " << Right.z << std::endl;
+        // std::cout << "Camera Up: " << Up.x << ", " << Up.y << ", " << Up.z << std::endl;
     }
 
 private:
