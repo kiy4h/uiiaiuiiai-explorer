@@ -209,8 +209,11 @@ void processInput(GLFWwindow *window) {
         glm::vec3 newPosition = currentPosition + moveDirection * speed;
 
         // Keep the model on top of the terrain
-        float terrainHeight = terrain->getHeightAt((int)newPosition.x, (int)newPosition.z);
-        newPosition.y = terrainHeight;
+        float terrainHeight = terrain->getHeightAt(newPosition.x, newPosition.z);
+
+        // Smoothly interpolate the Y position towards the target height
+        float smoothFactor = 0.1f; // Adjust this value for more/less smoothness
+        newPosition.y = glm::mix(currentPosition.y, terrainHeight, smoothFactor);
 
         // Clamp position to stay within terrain bounds
         newPosition.x = glm::clamp(newPosition.x, 0.0f, (float)(terrain->getWidth() - 1));
@@ -220,11 +223,9 @@ void processInput(GLFWwindow *window) {
 
         // Calculate target rotation (yaw angle) based on moveDirection
         float targetYaw = glm::degrees(glm::atan(moveDirection.z, moveDirection.x));
+        // Get the current yaw angle of the model
+        float currentYaw = ourModel->GetRotation().y;
         if (isRotate) {
-
-            // Get the current yaw angle of the model
-            float currentYaw = ourModel->GetRotation().y;
-
             // Ensure angles are in the range [0, 360)
             targetYaw = fmod(targetYaw + 360.0f, 360.0f);
             currentYaw = fmod(currentYaw + 360.0f, 360.0f);
@@ -244,8 +245,6 @@ void processInput(GLFWwindow *window) {
             //           << ", Rotation Speed: " << rotationSpeed << std::endl;
         } else {
             // TODO: fix model direction.
-            // Get the current yaw angle of the model
-            float currentYaw = ourModel->GetRotation().y;
 
             // Smoothly interpolate (lerp) between current and target yaw angles
             float smoothFactor = 0.1f; // Adjust for more/less smoothness

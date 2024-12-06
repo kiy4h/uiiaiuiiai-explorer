@@ -156,20 +156,30 @@ bool Terrain::loadTexture(const std::string &texturePath) {
     return true;
 }
 
-float Terrain::getHeightAt(int x, int z) const {
-    if (!heightmapData) {
-        std::cerr << "Error: Heightmap not loaded correctly!" << std::endl;
-        return 0.0f; // Return a default value
-    }
+float Terrain::getHeightAt(float x, float z) const {
+    // Convert the coordinates to integers for the four corners
+    int x0 = static_cast<int>(x);
+    int z0 = static_cast<int>(z);
+    int x1 = std::min(x0 + 1, heightmapWidth - 1);  // Ensure x1 doesn't go out of bounds
+    int z1 = std::min(z0 + 1, heightmapHeight - 1); // Ensure z1 doesn't go out of bounds
 
-    // Clamp x and z to the heightmap bounds
-    x = clamp(x, 0, heightmapWidth - 1);
-    z = clamp(z, 0, heightmapHeight - 1);
+    // Get the heights of the four surrounding points (top-left, top-right, bottom-left, bottom-right)
+    float h00 = heightmapData[z0 * heightmapWidth + x0]; // top-left
+    float h10 = heightmapData[z0 * heightmapWidth + x1]; // top-right
+    float h01 = heightmapData[z1 * heightmapWidth + x0]; // bottom-left
+    float h11 = heightmapData[z1 * heightmapWidth + x1]; // bottom-right
 
-    // Debug output for heightmap values
-    // std::cout << "Heightmap value at (" << x << ", " << z << "): "
-    //           << (int)heightmapData[z * heightmapWidth + x] << std::endl;
+    // Perform bilinear interpolation to calculate the height at (x, z)
+    float tx = x - x0; // Relative x-coordinate within the cell
+    float tz = z - z0; // Relative z-coordinate within the cell
 
-    // Return the height by reading the pixel value and scaling it
-    return terrainScale * (heightmapData[z * heightmapWidth + x] / 255.0f);
+    // Interpolate along x-direction (top and bottom)
+    float h0 = h00 + (h10 - h00) * tx;
+    float h1 = h01 + (h11 - h01) * tx;
+
+    // Interpolate along z-direction (final height)
+    float height = h0 + (h1 - h0) * tz;
+
+    // Scale the height as before
+    return terrainScale * (height / 255.0f);
 }

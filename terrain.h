@@ -16,7 +16,7 @@ public:
     void generateTerrain();
     bool loadTexture(const std::string &texturePath); // Corrected declaration
     void render(Shader &shader);
-    float getHeightAt(int x, int z) const;
+    float getHeightAt(float x, float z) const;
 
     int getWidth() const { return terrainWidth; }
     int getHeight() const { return terrainHeight; }
