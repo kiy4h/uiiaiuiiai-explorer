@@ -28,7 +28,7 @@ using namespace std;
 
 #pragma comment(lib, "assimp.lib")
 
-unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
+inline unsigned int TextureFromFile(const char *path, const string &directory, bool gamma = false);
 
 class Model {
 public:

@@ -231,3 +231,52 @@ float Terrain::getHeightAt(float x, float z) const {
     // Scale the height as before
     return terrainScale * (height / 255.0f);
 }
+
+void Terrain::addModel(const std::string &type, const std::string &modelPath) {
+    Model model(modelPath); // Assuming Model is a class for loading and managing 3D models
+    models[type].push_back(model);
+}
+
+void Terrain::generateObjects(int count, const std::string &type,
+                              float minHeight, float maxHeight, float spread) {
+    for (int i = 0; i < count; ++i) {
+        // Generate random position on the terrain
+        float x = static_cast<float>(rand() % terrainWidth);
+        float z = static_cast<float>(rand() % terrainHeight);
+        float y = getHeightAt(x, z);
+
+        // Only place the object if it falls within the height range
+        if (y >= minHeight && y <= maxHeight) {
+
+            // Randomly select a model from the available models for this type
+            int modelIndex = rand() % models[type].size();
+
+            // Add the object to the list
+            objects.push_back({glm::vec3(x, getHeightAt(x, z), z), modelIndex, type});
+        }
+        cout << "Object generated at: " << x << ", " << y << ", " << z << endl;
+    }
+}
+
+void Terrain::renderObjects(Shader &objectShader, const glm::mat4 &vp) {
+    objectShader.use();
+
+    for (const auto &object : objects) {
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, object.position);
+
+        if (object.type == "tree") {
+            model = glm::scale(model, glm::vec3(1.0f)); // Example scaling
+        } else if (object.type == "rock") {
+            model = glm::scale(model, glm::vec3(0.5f));
+        } else if (object.type == "grass") {
+            model = glm::scale(model, glm::vec3(0.2f));
+        }
+
+        objectShader.setMat4("model", model);
+        objectShader.setMat4("viewProjection", vp);
+
+        // Render the selected model
+        models[object.type][object.modelIndex].Draw(objectShader);
+    }
+}

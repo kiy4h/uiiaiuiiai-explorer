@@ -104,6 +104,10 @@ int main() {
     // Create the terrain using the heightmap
     terrain = new Terrain("height-map.png", 10.0f, 256, 256);
     terrain->loadTexture("images/grass.jpg"); // Load the texture for the terrain
+
+    terrain->addModel("grass", "models/grass/grass.obj");       // Load the model for the grass
+    terrain->generateObjects(1000, "grass", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
+
     std::vector<std::string> faces = {
         "images/skybox/right.jpg", "images/skybox/left.jpg", "images/skybox/top.jpg",
         "images/skybox/bottom.jpg", "images/skybox/front.jpg", "images/skybox/back.jpg"};
@@ -154,6 +158,10 @@ int main() {
         ourShader.setMat4("view", view);
         ourShader.setMat4("model", model);
         ourModel->Draw(ourShader);
+
+        // ** Render objects **
+        ourShader.use();
+        terrain->renderObjects(ourShader, vp);
 
         // ** Render the skybox **
         skybox.render(camera.GetViewMatrix(), projection, camera);
