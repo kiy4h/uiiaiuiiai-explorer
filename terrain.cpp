@@ -44,16 +44,23 @@ bool Terrain::loadHeightmap(const std::string &path) {
     std::cout << "Heightmap loaded successfully! Width: " << heightmapWidth << ", Height: " << heightmapHeight << std::endl;
     return true;
 }
-
 void Terrain::generateTerrain() {
+    minCorner = glm::vec3(0.0f, FLT_MAX, 0.0f);                                 // Initialize minCorner
+    maxCorner = glm::vec3((float)terrainWidth, -FLT_MAX, (float)terrainHeight); // Initialize maxCorner
+
     for (int z = 0; z < terrainHeight; ++z) {
         for (int x = 0; x < terrainWidth; ++x) {
-            // Get the height of the terrain at (x, z) using the heightmap
             float height = getHeightAt(x, z);
 
-            // Add vertex (x, y, z) where y is the height
+            // Update minCorner and maxCorner
+            minCorner.y = glm::min(minCorner.y, height);
+            maxCorner.y = glm::max(maxCorner.y, height);
+            const float tolerance = 1.0f; // Expand the bounding box slightly
+            minCorner -= glm::vec3(tolerance);
+            maxCorner += glm::vec3(tolerance);
+
             vertices.push_back(x);      // X
-            vertices.push_back(height); // Y (height)
+            vertices.push_back(height); // Y
             vertices.push_back(z);      // Z
 
             // Scale texture coordinates to make the texture smaller (repeat it more times)
@@ -109,16 +116,57 @@ void Terrain::setupTerrainBuffers() {
     glBindVertexArray(0);
 }
 
-void Terrain::render(Shader &shader) {
-    // Activate the shader
-    shader.use();
+bool Terrain::isInsideFrustum(const glm::vec4 planes[6]) const {
+    for (int i = 0; i < 6; ++i) {
+        bool isOutside = true;
 
-    // Bind the texture
+        // Check all 8 corners of the bounding box against the plane
+        for (const auto &corner : {
+                 glm::vec4(minCorner.x, minCorner.y, minCorner.z, 1.0f),
+                 glm::vec4(maxCorner.x, minCorner.y, minCorner.z, 1.0f),
+                 glm::vec4(minCorner.x, maxCorner.y, minCorner.z, 1.0f),
+                 glm::vec4(maxCorner.x, maxCorner.y, minCorner.z, 1.0f),
+                 glm::vec4(minCorner.x, minCorner.y, maxCorner.z, 1.0f),
+                 glm::vec4(maxCorner.x, minCorner.y, maxCorner.z, 1.0f),
+                 glm::vec4(minCorner.x, maxCorner.y, maxCorner.z, 1.0f),
+                 glm::vec4(maxCorner.x, maxCorner.y, maxCorner.z, 1.0f)}) {
+            if (glm::dot(planes[i], corner) >= 0.0f) {
+                isOutside = false; // At least one point is inside
+                break;
+            }
+        }
+
+        if (isOutside) {
+            return false; // The box is outside this plane
+        }
+    }
+    return true; // The box is inside or intersects all planes
+}
+
+void Terrain::render(Shader &shader, const glm::mat4 &vp) {
+    // Calculate frustum planes
+    glm::vec4 planes[6];
+    planes[0] = glm::vec4(vp[3] + vp[0]);
+    planes[1] = glm::vec4(vp[3] - vp[0]);
+    planes[2] = glm::vec4(vp[3] + vp[1]);
+    planes[3] = glm::vec4(vp[3] - vp[1]);
+    planes[4] = glm::vec4(vp[3] + vp[2]);
+    planes[5] = glm::vec4(vp[3] - vp[2]);
+    for (int i = 0; i < 6; ++i) {
+        planes[i] = glm::normalize(planes[i]);
+    }
+
+    // Perform frustum culling
+    if (!isInsideFrustum(planes)) {
+        return; // Skip rendering if the terrain is outside the frustum
+    }
+
+    // Bind the terrain's texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, textureID);
-    shader.setInt("terrainTexture", 0); // Assuming the shader uses a sampler2D called 'terrainTexture'
+    shader.setInt("terrainTexture", 0); // Tell the shader to use texture unit 0
 
-    // Bind and draw the terrain
+    // Render the terrain
     glBindVertexArray(terrainVAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);

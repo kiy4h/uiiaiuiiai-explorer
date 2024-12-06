@@ -132,29 +132,28 @@ int main() {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // ** Render ourModel **
-        ourShader.use();
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 model = glm::mat4(1.0f);
-
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
-        model = glm::translate(model, ourModel->GetPosition());
-        model = glm::rotate(model, glm::radians(ourModel->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f));
-        ourShader.setMat4("model", model);
-        ourModel->Draw(ourShader);
+        glm::mat4 vp = projection * view;
 
         // ** Render terrain **
         terrainShader.use();
         terrainShader.setMat4("view", view);
         terrainShader.setMat4("projection", projection);
 
-        // Separate model matrix for terrain
         glm::mat4 terrainModel = glm::mat4(1.0f); // Adjust position/scale as needed
         terrainShader.setMat4("model", terrainModel);
+        terrain->render(terrainShader, vp);
 
-        terrain->render(terrainShader);
+        // ** Render ourModel **
+        ourShader.use();
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, ourModel->GetPosition());
+        model = glm::rotate(model, glm::radians(ourModel->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f));
+        ourShader.setMat4("projection", projection);
+        ourShader.setMat4("view", view);
+        ourShader.setMat4("model", model);
+        ourModel->Draw(ourShader);
 
         // ** Render the skybox **
         skybox.render(camera.GetViewMatrix(), projection, camera);
