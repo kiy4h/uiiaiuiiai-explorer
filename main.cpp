@@ -113,7 +113,7 @@ int main() {
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    isRotate = 1;
+    isRotate = 0;
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
@@ -243,11 +243,9 @@ void processInput(GLFWwindow *window) {
             //           << ", Target Yaw: " << targetYaw
             //           << ", Rotation Speed: " << rotationSpeed << std::endl;
         } else {
-            // TODO: fix model direction.
-
             // Smoothly interpolate (lerp) between current and target yaw angles
             float smoothFactor = 0.1f; // Adjust for more/less smoothness
-            float newYaw = glm::mix(currentYaw, targetYaw + 90, smoothFactor);
+            float newYaw = glm::mix(currentYaw, -targetYaw + 90, smoothFactor);
 
             // Update model's rotation (yaw only)
             ourModel->SetRotation(glm::vec3(0.0f, newYaw, 0.0f));
