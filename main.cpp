@@ -10,7 +10,7 @@
 #include "camera.h"
 #include "filesystem.h"
 #include "model.h"
-#include "shader_m.h"
+#include "shader.h"
 #include "terrain.h"
 
 #include <iostream>
@@ -89,14 +89,14 @@ int main() {
 
     // build and compile shaders
     // -------------------------
-    Shader ourShader("1.model_loading.vs", "1.model_loading.fs");
-    // Shader terrainShader("1.model_loading.vs", "terrain.fs");
+    Shader ourShader("shaders/1.model_loading.vs", "shaders/1.model_loading.fs");
+    Shader terrainShader("shaders/terrain.vs", "shaders/terrain.fs");
 
     // load models
     // -----------
     // Model ourModel(FileSystem::getPath("oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
-    Model *newModel = new Model(FileSystem::getPath("backpack/backpack.obj"));
-    ourModel = new Model(FileSystem::getPath("oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
+    Model *newModel = new Model(FileSystem::getPath("models/backpack/backpack.obj"));
+    ourModel = new Model(FileSystem::getPath("models/oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
     ourModel->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
     newModel->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 
@@ -142,15 +142,15 @@ int main() {
         ourModel->Draw(ourShader);
 
         // Render newModel independently
-        glm::mat4 newModelMatrix = glm::mat4(1.0f);
-        newModelMatrix = glm::translate(newModelMatrix, newModel->GetPosition());
-        ourShader.setMat4("model", newModelMatrix);
-        newModel->Draw(ourShader);
+        // glm::mat4 newModelMatrix = glm::mat4(1.0f);
+        // newModelMatrix = glm::translate(newModelMatrix, newModel->GetPosition());
+        // ourShader.setMat4("model", newModelMatrix);
+        // newModel->Draw(ourShader);
 
         // Render the terrain
-        // glm::mat4 terrainModel = glm::mat4(1.0f);     // Identity matrix for terrain
-        // terrainShader.setMat4("model", terrainModel); // Pass the model matrix for terrain
-        terrain->render(); // Render the terrain mesh
+        glm::mat4 terrainModel = glm::mat4(1.0f); // Identity matrix for terrain
+        ourShader.setMat4("model", terrainModel); // Pass the model matrix for terrain
+        terrain->render(ourShader);               // Render the terrain mesh
 
         // Swap buffers and poll events
         glfwSwapBuffers(window);

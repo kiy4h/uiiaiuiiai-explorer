@@ -15,7 +15,7 @@
 #include <stb/stb_image.h>
 
 #include "mesh.h"
-#include "shader_m.h"
+#include "shader.h"
 
 #include <fstream>
 #include <iostream>

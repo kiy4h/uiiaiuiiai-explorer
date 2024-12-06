@@ -91,10 +91,37 @@ void Terrain::setupTerrainBuffers() {
     glBindVertexArray(0);
 }
 
-void Terrain::render() {
+void Terrain::render(Shader &shader) {
+    // Activate the shader
+    shader.use();
+
+    // Bind the texture
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+    shader.setInt("terrainTexture", 0); // Assuming the shader uses a sampler2D called 'terrainTexture'
+
+    // Bind and draw the terrain
     glBindVertexArray(terrainVAO);
     glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
     glBindVertexArray(0);
+}
+
+bool Terrain::loadTexture(const std::string &texturePath) {
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_2D, textureID);
+
+    int width, height, nrChannels;
+    unsigned char *data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        stbi_image_free(data);
+        return true;
+    } else {
+        std::cerr << "Failed to load texture: " << texturePath << std::endl;
+        stbi_image_free(data);
+        return false;
+    }
 }
 
 float Terrain::getHeightAt(int x, int z) const {

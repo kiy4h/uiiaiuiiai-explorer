@@ -1,5 +1,5 @@
-#ifndef SHADER_H
-#define SHADER_H
+#ifndef SHADER_M_H
+#define SHADER_M_H
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
@@ -9,12 +9,12 @@
 #include <sstream>
 #include <string>
 
-class Shader {
+class Shader_m {
 public:
     unsigned int ID;
     // ���캯�������ɶ�̬��ɫ��
     // ------------------------------------------------------------------------
-    Shader(const char *vertexPath, const char *fragmentPath) {
+    Shader_m(const char *vertexPath, const char *fragmentPath) {
         // 1. ��filePath��������/ƬԪ��Դ����
         std::string vertexCode;
         std::string fragmentCode;
