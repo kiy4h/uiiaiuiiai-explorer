@@ -10,6 +10,7 @@
                 "${fileDirname}\\${fileBasenameNoExtension}.cpp",
                 "glad.c",
                 "terrain.cpp",
+                "skybox.cpp",
                 "stb_image.cpp",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",

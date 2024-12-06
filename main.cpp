@@ -11,6 +11,7 @@
 #include "filesystem.h"
 #include "model.h"
 #include "shader.h"
+#include "skybox.h"
 #include "terrain.h"
 
 #include <iostream>
@@ -103,6 +104,12 @@ int main() {
     // Create the terrain using the heightmap
     terrain = new Terrain("height-map.png", 10.0f, 256, 256); // Use your heightmap path and size
 
+    std::vector<std::string> faces = {
+        "images/skybox/right.jpg", "images/skybox/left.jpg", "images/skybox/top.jpg",
+        "images/skybox/bottom.jpg", "images/skybox/front.jpg", "images/skybox/back.jpg"};
+    Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.fs");
+    Skybox skybox(faces, skyboxShader);
+
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -151,6 +158,9 @@ int main() {
         glm::mat4 terrainModel = glm::mat4(1.0f); // Identity matrix for terrain
         ourShader.setMat4("model", terrainModel); // Pass the model matrix for terrain
         terrain->render(ourShader);               // Render the terrain mesh
+
+        // Render the skybox
+        skybox.render(camera.GetViewMatrix(), projection, camera);
 
         // Swap buffers and poll events
         glfwSwapBuffers(window);
