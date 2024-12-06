@@ -35,6 +35,7 @@ private:
 
     std::vector<float> vertices;
     std::vector<unsigned int> indices;
+    std::vector<float> texCoords;
 
     // Add this to manage the texture
     GLuint textureID;

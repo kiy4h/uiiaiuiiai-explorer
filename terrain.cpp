@@ -11,8 +11,9 @@ T clamp(const T &value, const T &low, const T &high) {
                                                 : value;
 }
 
+// Constructor
 Terrain::Terrain(const std::string &heightmapPath, float scale, int width, int height)
-    : terrainScale(scale), terrainWidth(width), terrainHeight(height) {
+    : terrainScale(scale), terrainWidth(width), terrainHeight(height), textureID(0) { // Initialize textureID
     if (!loadHeightmap(heightmapPath)) {
         std::cerr << "Error loading heightmap!" << std::endl;
     }
@@ -20,12 +21,16 @@ Terrain::Terrain(const std::string &heightmapPath, float scale, int width, int h
     setupTerrainBuffers();
 }
 
+// Destructor
 Terrain::~Terrain() {
-    // Clean up heightmap data and OpenGL buffers
     stbi_image_free(heightmapData);
     glDeleteBuffers(1, &terrainVBO);
     glDeleteBuffers(1, &terrainEBO);
     glDeleteVertexArrays(1, &terrainVAO);
+
+    if (textureID != 0) {
+        glDeleteTextures(1, &textureID); // Clean up texture
+    }
 }
 
 bool Terrain::loadHeightmap(const std::string &path) {
@@ -50,6 +55,12 @@ void Terrain::generateTerrain() {
             vertices.push_back(x);      // X
             vertices.push_back(height); // Y (height)
             vertices.push_back(z);      // Z
+
+            // Generate texture coordinates (UV mapping)
+            float u = (float)x / (terrainWidth - 1);
+            float v = (float)z / (terrainHeight - 1);
+            texCoords.push_back(u); // U
+            texCoords.push_back(v); // V
         }
     }
 
@@ -71,7 +82,6 @@ void Terrain::generateTerrain() {
 }
 
 void Terrain::setupTerrainBuffers() {
-    // Create OpenGL buffers
     glGenVertexArrays(1, &terrainVAO);
     glGenBuffers(1, &terrainVBO);
     glGenBuffers(1, &terrainEBO);
@@ -79,14 +89,22 @@ void Terrain::setupTerrainBuffers() {
     glBindVertexArray(terrainVAO);
 
     glBindBuffer(GL_ARRAY_BUFFER, terrainVBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, (vertices.size() + texCoords.size()) * sizeof(float), nullptr, GL_STATIC_DRAW);
+
+    // Upload the vertices and texture coordinates to the buffer
+    glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size() * sizeof(float), vertices.data());
+    glBufferSubData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), texCoords.size() * sizeof(float), texCoords.data());
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, terrainEBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
-    // Position attribute
+    // Position attribute (location = 0)
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
     glEnableVertexAttribArray(0);
+
+    // Texture coordinates attribute (location = 1)
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void *)(vertices.size() * sizeof(float)));
+    glEnableVertexAttribArray(1);
 
     glBindVertexArray(0);
 }
@@ -112,16 +130,22 @@ bool Terrain::loadTexture(const std::string &texturePath) {
 
     int width, height, nrChannels;
     unsigned char *data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
-    if (data) {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
-        stbi_image_free(data);
-        return true;
-    } else {
+    if (!data) {
         std::cerr << "Failed to load texture: " << texturePath << std::endl;
-        stbi_image_free(data);
+        std::cerr << "stb_image error: " << stbi_failure_reason() << std::endl;
         return false;
     }
+
+    GLenum format = GL_RGB; // Default format
+    if (nrChannels == 4) {
+        format = GL_RGBA; // Use RGBA if image has an alpha channel
+    }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    stbi_image_free(data);
+    return true;
 }
 
 float Terrain::getHeightAt(int x, int z) const {

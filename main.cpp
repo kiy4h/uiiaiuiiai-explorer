@@ -102,8 +102,8 @@ int main() {
     newModel->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 
     // Create the terrain using the heightmap
-    terrain = new Terrain("height-map.png", 10.0f, 256, 256); // Use your heightmap path and size
-
+    terrain = new Terrain("height-map.png", 10.0f, 256, 256);
+    terrain->loadTexture("images/grass.jpg"); // Load the texture for the terrain
     std::vector<std::string> faces = {
         "images/skybox/right.jpg", "images/skybox/left.jpg", "images/skybox/top.jpg",
         "images/skybox/bottom.jpg", "images/skybox/front.jpg", "images/skybox/back.jpg"};
@@ -113,7 +113,7 @@ int main() {
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-    isRotate = 0;
+    isRotate = 1;
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
@@ -132,34 +132,31 @@ int main() {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // ** Render ourModel **
         ourShader.use();
-        // terrainShader.use();
-
-        // Projection and View Matrices
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
+        glm::mat4 model = glm::mat4(1.0f);
+
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
-
-        // Render ourModel
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, ourModel->GetPosition());                                           // Apply position
-        model = glm::rotate(model, glm::radians(ourModel->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f)); // Apply rotation
+        model = glm::translate(model, ourModel->GetPosition());
+        model = glm::rotate(model, glm::radians(ourModel->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f));
         ourShader.setMat4("model", model);
         ourModel->Draw(ourShader);
 
-        // Render newModel independently
-        // glm::mat4 newModelMatrix = glm::mat4(1.0f);
-        // newModelMatrix = glm::translate(newModelMatrix, newModel->GetPosition());
-        // ourShader.setMat4("model", newModelMatrix);
-        // newModel->Draw(ourShader);
+        // ** Render terrain **
+        terrainShader.use();
+        terrainShader.setMat4("view", view);
+        terrainShader.setMat4("projection", projection);
 
-        // Render the terrain
-        glm::mat4 terrainModel = glm::mat4(1.0f); // Identity matrix for terrain
-        ourShader.setMat4("model", terrainModel); // Pass the model matrix for terrain
-        terrain->render(ourShader);               // Render the terrain mesh
+        // Separate model matrix for terrain
+        glm::mat4 terrainModel = glm::mat4(1.0f); // Adjust position/scale as needed
+        terrainShader.setMat4("model", terrainModel);
 
-        // Render the skybox
+        terrain->render(terrainShader);
+
+        // ** Render the skybox **
         skybox.render(camera.GetViewMatrix(), projection, camera);
 
         // Swap buffers and poll events
