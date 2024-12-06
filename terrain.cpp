@@ -56,11 +56,11 @@ void Terrain::generateTerrain() {
             vertices.push_back(height); // Y (height)
             vertices.push_back(z);      // Z
 
-            // Generate texture coordinates (UV mapping)
-            float u = (float)x / (terrainWidth - 1);
-            float v = (float)z / (terrainHeight - 1);
-            texCoords.push_back(u); // U
-            texCoords.push_back(v); // V
+            // Scale texture coordinates to make the texture smaller (repeat it more times)
+            float u = (float)x / (terrainWidth - 1) * 10.0f;  // Repeat the texture 4 times in X direction
+            float v = (float)z / (terrainHeight - 1) * 10.0f; // Repeat the texture 4 times in Z direction
+            texCoords.push_back(u);                           // U
+            texCoords.push_back(v);                           // V
         }
     }
 
@@ -143,6 +143,14 @@ bool Terrain::loadTexture(const std::string &texturePath) {
 
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
+
+    // Set texture wrapping mode to repeat
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT); // Wrap in X direction
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT); // Wrap in Y direction
+
+    // Optionally, you can also set the min and mag filters
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     stbi_image_free(data);
     return true;
