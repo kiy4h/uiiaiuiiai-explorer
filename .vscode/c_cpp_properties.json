@@ -1,0 +1,34 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:/msys64/ucrt64/include/glm/",
+                "C:/msys64/mingw64/include/assimp",
+                "C:/msys64/mingw64/include/stb",
+                "C:/msys64/ucrt64/include/stb",
+                "C:/LearnOpenGL/includes",
+                "C:/LearnOpenGL/includes/learnopengl"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "ASSIMP_BUILD_NO_EXPORT"
+            ],
+            "compilerPath": "C:/msys64/ucrt64/bin/g++.exe",
+            "cStandard": "c17",
+            "cppStandard": "gnu++17",
+            "intelliSenseMode": "windows-gcc-x64",
+            "browse": {
+                "path": [
+                    "C:/LearnOpenGL/includes",
+                    "C:/LearnOpenGL/includes/learnopengl"
+                ],
+                "limitSymbolsToIncludedHeaders": true
+            }
+        }
+    ],
+    "version": 4
+}

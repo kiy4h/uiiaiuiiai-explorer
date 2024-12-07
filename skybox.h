@@ -3,8 +3,8 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-#include <learnopengl/camera.h>
-#include <learnopengl/shader_m.h>
+#include "C:/LearnOpenGL/includes/learnopengl/camera.h"
+#include "C:/LearnOpenGL/includes/learnopengl/shader.h"
 #include <string>
 #include <vector>
 

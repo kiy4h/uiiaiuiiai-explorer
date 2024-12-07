@@ -22,6 +22,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 void updateCamera();
 
+
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
@@ -41,6 +42,10 @@ GLuint terrainVAO;
 Model *ourModel;
 Terrain *terrain;
 glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f); // Adjust for desired fixed distance and height
+
+glm::vec3 lightPos(5000.0f, 9000.0f, 2000.0f);  // Position of light source
+glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // Light color (white light)
+glm::vec3 objectColor(1.0f, 1.0f, 1.0f); // Color of the object
 
 int main() {
 
@@ -91,7 +96,9 @@ int main() {
     // build and compile shaders
     // -------------------------
     Shader ourShader("shaders/1.model_loading.vs", "shaders/1.model_loading.fs");
+    Shader lightingShader("shaders/lighting.vs", "shaders/lighting.fs");
     Shader terrainShader("shaders/terrain.vs", "shaders/terrain.fs");
+    
 
     // load models
     // -----------
@@ -135,6 +142,7 @@ int main() {
         // Rendering
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        
 
         glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera.GetViewMatrix();
@@ -144,16 +152,32 @@ int main() {
         terrainShader.use();
         terrainShader.setMat4("view", view);
         terrainShader.setMat4("projection", projection);
+        terrainShader.setVec3("viewPos", camera.Position);
+        terrainShader.setVec3("lightPos", lightPos);
+        terrainShader.setVec3("lightColor", lightColor);
+
+        // set light
+        lightingShader.use();
+        // Set light position dan kamera (view position)
+        lightingShader.setMat4("projection", projection);
+        lightingShader.setMat4("view", view);
+        lightingShader.setVec3("lightPos", lightPos);
+        lightingShader.setVec3("viewPos", camera.Position);
+        lightingShader.setVec3("objectColor", objectColor);
+        lightingShader.setVec3("lightColor", lightColor);
+        lightingShader.setFloat("shininess", 100.0f);
 
         glm::mat4 terrainModel = glm::mat4(1.0f); // Adjust position/scale as needed
-        terrainShader.setMat4("model", terrainModel);
-        terrain->render(terrainShader, vp);
+        lightingShader.setMat4("model", terrainModel);
+        // terrainShader.setMat4("model", terrainModel);
+        terrain->render(lightingShader, vp);
 
         // ** Render ourModel **
         ourShader.use();
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, ourModel->GetPosition());
         model = glm::rotate(model, glm::radians(ourModel->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f));
+        lightingShader.setMat4("model", model);
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
         ourShader.setMat4("model", model);
