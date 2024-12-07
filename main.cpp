@@ -42,6 +42,10 @@ Model *ourModel;
 Terrain *terrain;
 glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f); // Adjust for desired fixed distance and height
 
+glm::vec3 lightPos(5000.0f, 9000.0f, 2000.0f);  // Position of light source
+glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // Light color (white light)
+glm::vec3 objectColor(1.0f, 1.0f, 1.0f); // Color of the object
+
 int main() {
 
     // Initialize GLFW
@@ -92,6 +96,7 @@ int main() {
     // -------------------------
     Shader ourShader("shaders/1.model_loading.vs", "shaders/1.model_loading.fs");
     Shader terrainShader("shaders/terrain.vs", "shaders/terrain.fs");
+    Shader lightingShader("shaders/lighting.vs", "shaders/lighting.fs");
 
     // load models
     // -----------
@@ -145,9 +150,20 @@ int main() {
         terrainShader.setMat4("view", view);
         terrainShader.setMat4("projection", projection);
 
+        // set light
+        lightingShader.use();
+        // Set light position dan kamera (view position)
+        lightingShader.setMat4("projection", projection);
+        lightingShader.setMat4("view", view);
+        lightingShader.setVec3("lightPos", lightPos);
+        lightingShader.setVec3("viewPos", camera.Position);
+        lightingShader.setVec3("objectColor", objectColor);
+        lightingShader.setVec3("lightColor", lightColor);
+        lightingShader.setFloat("shininess", 100.0f);
+        
         glm::mat4 terrainModel = glm::mat4(1.0f); // Adjust position/scale as needed
-        terrainShader.setMat4("model", terrainModel);
-        terrain->render(terrainShader, vp);
+        lightingShader.setMat4("model", terrainModel);
+        terrain->render(lightingShader, vp);
 
         // ** Render ourModel **
         ourShader.use();
