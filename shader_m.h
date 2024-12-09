@@ -1,5 +1,5 @@
-#ifndef SHADER_M_H
-#define SHADER_M_H
+#ifndef SHADER_H
+#define SHADER_H
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>

@@ -1,10 +1,10 @@
 #ifndef SKYBOX_H
 #define SKYBOX_H
 
+#include "camera.h"
+#include "shader.h"
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-#include <learnopengl/camera.h>
-#include <learnopengl/shader_m.h>
 #include <string>
 #include <vector>
 
