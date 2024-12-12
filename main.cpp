@@ -42,9 +42,9 @@ Model *ourModel;
 Terrain *terrain;
 glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f); // Adjust for desired fixed distance and height
 
-glm::vec3 lightPos(5000.0f, 9000.0f, 2000.0f);  // Position of light source
-glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // Light color (white light)
-glm::vec3 objectColor(1.0f, 1.0f, 1.0f); // Color of the object
+glm::vec3 lightPos(5000.0f, 9000.0f, 2000.0f); // Position of light source
+glm::vec3 lightColor(1.0f, 1.0f, 1.0f);        // Light color (white light)
+glm::vec3 objectColor(1.0f, 1.0f, 1.0f);       // Color of the object
 
 int main() {
 
@@ -107,7 +107,7 @@ int main() {
     newModel->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
 
     // Create the terrain using the heightmap
-    terrain = new Terrain("height-map.png", 10.0f, 256, 256);
+    terrain = new Terrain("images/height-map.png", 10.0f, 256, 256);
     terrain->loadTexture("images/grass.jpg"); // Load the texture for the terrain
 
     terrain->addModel("grass", "models/grass/grass.obj");       // Load the model for the grass
@@ -160,7 +160,7 @@ int main() {
         lightingShader.setVec3("objectColor", objectColor);
         lightingShader.setVec3("lightColor", lightColor);
         lightingShader.setFloat("shininess", 100.0f);
-        
+
         glm::mat4 terrainModel = glm::mat4(1.0f); // Adjust position/scale as needed
         lightingShader.setMat4("model", terrainModel);
         terrain->render(lightingShader, vp);
