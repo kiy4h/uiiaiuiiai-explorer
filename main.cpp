@@ -94,7 +94,7 @@ int main() {
 
     // build and compile shaders
     // -------------------------
-    Shader ourShader("shaders/1.model_loading.vs", "shaders/1.model_loading.fs");
+    Shader ourShader("shaders/model.vs", "shaders/model.fs");
     Shader terrainShader("shaders/terrain.vs", "shaders/terrain.fs");
     Shader lightingShader("shaders/lighting.vs", "shaders/lighting.fs");
 
