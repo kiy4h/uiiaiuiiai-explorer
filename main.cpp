@@ -94,8 +94,7 @@ int main() {
 
     // build and compile shaders
     // -------------------------
-    Shader ourShader("shaders/1.model_loading.vs", "shaders/1.model_loading.fs");
-    // Shader lightingShader("shaders/lighting.vs", "shaders/lighting.fs");
+    Shader ourShader("shaders/model.vs", "shaders/model.fs");
     Shader terrainShader("shaders/terrain.vs", "shaders/terrain.fs");
     
 
@@ -160,19 +159,7 @@ int main() {
         terrainShader.setVec3("lightPos", lightPos);
         terrainShader.setVec3("lightColor", lightColor);
 
-        // // set light
-        // lightingShader.use();
-        // // Set light position dan kamera (view position)
-        // lightingShader.setMat4("projection", projection);
-        // lightingShader.setMat4("view", view);
-        // lightingShader.setVec3("lightPos", lightPos);
-        // lightingShader.setVec3("viewPos", camera.Position);
-        // lightingShader.setVec3("objectColor", objectColor);
-        // lightingShader.setVec3("lightColor", lightColor);
-        // lightingShader.setFloat("shininess", 15.0f);
-
         glm::mat4 terrainModel = glm::mat4(1.0f); // Adjust position/scale as needed
-        // lightingShader.setMat4("model", terrainModel);
         terrainShader.setMat4("model", terrainModel);
         terrain->render(terrainShader, vp);
 
