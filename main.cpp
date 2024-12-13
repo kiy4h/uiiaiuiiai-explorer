@@ -44,7 +44,6 @@ glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f); // Adjust for desired fixed distance 
 
 glm::vec3 lightPos(100.0f, 100.0f, 100.0f);  // Position of light source
 glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // Light color (white light)
-// glm::vec3 objectColor(1.0f, 1.0f, 1.0f); // Color of the object
 
 int main() {
 

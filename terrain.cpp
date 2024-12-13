@@ -271,6 +271,10 @@ void Terrain::renderObjects(Shader &objectShader, const glm::mat4 &vp) {
             model = glm::scale(model, glm::vec3(0.5f));
         } else if (object.type == "grass") {
             model = glm::scale(model, glm::vec3(0.2f));
+        } else if (object.type == "batu") {
+            model = glm::scale(model, glm::vec3(0.15f));
+        } else if (object.type == "batu1") {
+            model = glm::scale(model, glm::vec3(0.2f));
         }
 
         objectShader.setMat4("model", model);
