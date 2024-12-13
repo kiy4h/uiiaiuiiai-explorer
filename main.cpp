@@ -43,9 +43,9 @@ Model *ourModel;
 Terrain *terrain;
 glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f); // Adjust for desired fixed distance and height
 
-glm::vec3 lightPos(5000.0f, 9000.0f, 2000.0f);  // Position of light source
+glm::vec3 lightPos(100.0f, 100.0f, 100.0f);  // Position of light source
 glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // Light color (white light)
-glm::vec3 objectColor(1.0f, 1.0f, 1.0f); // Color of the object
+// glm::vec3 objectColor(1.0f, 1.0f, 1.0f); // Color of the object
 
 int main() {
 
@@ -96,7 +96,7 @@ int main() {
     // build and compile shaders
     // -------------------------
     Shader ourShader("shaders/1.model_loading.vs", "shaders/1.model_loading.fs");
-    Shader lightingShader("shaders/lighting.vs", "shaders/lighting.fs");
+    // Shader lightingShader("shaders/lighting.vs", "shaders/lighting.fs");
     Shader terrainShader("shaders/terrain.vs", "shaders/terrain.fs");
     
 
@@ -114,6 +114,12 @@ int main() {
 
     terrain->addModel("grass", "models/grass/grass.obj");       // Load the model for the grass
     terrain->generateObjects(1000, "grass", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
+    
+    terrain->addModel("batu", "models/batu/batu.obj");       // Load the model for the grass
+    terrain->generateObjects(100, "batu", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
+    
+    terrain->addModel("batu1", "models/batu1/batu1.obj");       // Load the model for the grass
+    terrain->generateObjects(110, "batu1", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
 
     std::vector<std::string> faces = {
         "images/skybox/right.jpg", "images/skybox/left.jpg", "images/skybox/top.jpg",
@@ -153,31 +159,30 @@ int main() {
         terrainShader.setMat4("view", view);
         terrainShader.setMat4("projection", projection);
         terrainShader.setVec3("viewPos", camera.Position);
-        // terrainShader.setVec3("lightPos", lightPos);
-        // terrainShader.setVec3("lightColor", lightColor);
+        terrainShader.setVec3("lightPos", lightPos);
+        terrainShader.setVec3("lightColor", lightColor);
 
-        // set light
-        lightingShader.use();
-        // Set light position dan kamera (view position)
-        lightingShader.setMat4("projection", projection);
-        lightingShader.setMat4("view", view);
-        lightingShader.setVec3("lightPos", lightPos);
-        lightingShader.setVec3("viewPos", camera.Position);
-        lightingShader.setVec3("objectColor", objectColor);
-        lightingShader.setVec3("lightColor", lightColor);
-        lightingShader.setFloat("shininess", 10.0f);
+        // // set light
+        // lightingShader.use();
+        // // Set light position dan kamera (view position)
+        // lightingShader.setMat4("projection", projection);
+        // lightingShader.setMat4("view", view);
+        // lightingShader.setVec3("lightPos", lightPos);
+        // lightingShader.setVec3("viewPos", camera.Position);
+        // lightingShader.setVec3("objectColor", objectColor);
+        // lightingShader.setVec3("lightColor", lightColor);
+        // lightingShader.setFloat("shininess", 15.0f);
 
         glm::mat4 terrainModel = glm::mat4(1.0f); // Adjust position/scale as needed
-        lightingShader.setMat4("model", terrainModel);
-        // terrainShader.setMat4("model", terrainModel);
-        terrain->render(lightingShader, vp);
+        // lightingShader.setMat4("model", terrainModel);
+        terrainShader.setMat4("model", terrainModel);
+        terrain->render(terrainShader, vp);
 
         // ** Render ourModel **
         ourShader.use();
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, ourModel->GetPosition());
         model = glm::rotate(model, glm::radians(ourModel->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f));
-        // lightingShader.setMat4("model", model);
         ourShader.setMat4("projection", projection);
         ourShader.setMat4("view", view);
         ourShader.setMat4("model", model);
