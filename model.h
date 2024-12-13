@@ -32,8 +32,7 @@ inline unsigned int TextureFromFile(const char *path, const string &directory, b
 
 class Model {
 public:
-    /*  ģ������  */
-    vector<Texture> textures_loaded; // �������м��ع������������Ż�������ʹ�õ���ͬ����
+    vector<Texture> textures_loaded;
     vector<Mesh> meshes;
     string directory;
     bool gammaCorrection;

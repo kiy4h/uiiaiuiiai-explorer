@@ -25,7 +25,6 @@ public:
     glm::vec3 getMinCorner() const { return minCorner; }
     glm::vec3 getMaxCorner() const { return maxCorner; }
 
-    void addObject(const glm::vec3 &position, const std::string &type);
     void addModel(const std::string &type, const std::string &modelPath); // Load models
     void generateObjects(int count, const std::string &type, float minHeight, float maxHeight, float spread);
     void renderObjects(Shader &objectShader, const glm::mat4 &vp);

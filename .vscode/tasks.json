@@ -12,6 +12,8 @@
                 "terrain.cpp",
                 "skybox.cpp",
                 "stb_image.cpp",
+                "collectibles.cpp",
+                "game_controller.cpp",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
                 "-lglfw3",
