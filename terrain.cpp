@@ -266,15 +266,13 @@ void Terrain::renderObjects(Shader &objectShader, const glm::mat4 &vp) {
         model = glm::translate(model, object.position);
 
         if (object.type == "tree") {
-            model = glm::scale(model, glm::vec3(1.0f)); // Example scaling
+            model = glm::scale(model, glm::vec3(4.0f)); // Example scaling
         } else if (object.type == "rock") {
             model = glm::scale(model, glm::vec3(0.5f));
         } else if (object.type == "grass") {
             model = glm::scale(model, glm::vec3(0.2f));
-        } else if (object.type == "batu") {
-            model = glm::scale(model, glm::vec3(0.5f));
-        } else if (object.type == "batu1") {
-            model = glm::scale(model, glm::vec3(0.2f));
+        } else if (object.type == "bush") {
+            model = glm::scale(model, glm::vec3(0.3f));
         }
 
         objectShader.setMat4("model", model);
