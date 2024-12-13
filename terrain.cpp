@@ -252,7 +252,7 @@ void Terrain::generateObjects(int count, const std::string &type,
             int modelIndex = rand() % models[type].size();
 
             // Add the object to the list
-            objects.push_back({glm::vec3(x, getHeightAt(x, z), z), modelIndex, type});
+            objects.push_back({glm::vec3(x, y, z), modelIndex, type});
         }
         // cout << "Object generated at: " << x << ", " << y << ", " << z << endl;
     }

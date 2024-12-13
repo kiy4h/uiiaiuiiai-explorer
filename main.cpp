@@ -8,7 +8,9 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "camera.h"
+#include "collectibles.h"
 #include "filesystem.h"
+#include "game_controller.h"
 #include "model.h"
 #include "shader.h"
 #include "skybox.h"
@@ -38,7 +40,7 @@ float lastFrame = 0.0f;
 int isRotate;
 
 GLuint terrainVAO;
-Model *ourModel;
+Model *player;
 Terrain *terrain;
 glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f); // Adjust for desired fixed distance and height
 
@@ -93,17 +95,10 @@ int main() {
 
     // build and compile shaders
     // -------------------------
-    Shader ourShader("shaders/model.vs", "shaders/model.fs");
+    Shader playerShader("shaders/model.vs", "shaders/model.fs");
     Shader terrainShader("shaders/terrain.vs", "shaders/terrain.fs");
-    
-
-    // load models
-    // -----------
-    // Model ourModel(FileSystem::getPath("oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
-    Model *newModel = new Model(FileSystem::getPath("models/backpack/backpack.obj"));
-    ourModel = new Model(FileSystem::getPath("models/oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
-    ourModel->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
-    newModel->SetPosition(glm::vec3(0.0f, 0.0f, 0.0f));
+    Shader lightingShader("shaders/lighting.vs", "shaders/lighting.fs");
+    Shader collectibleShader("shaders/collectible.vs", "shaders/collectible.fs");
 
     // Create the terrain using the heightmap
     terrain = new Terrain("images/height-map.png", 10.0f, 256, 256);
@@ -118,6 +113,22 @@ int main() {
     terrain->addModel("batu1", "models/batu1/batu1.obj");       // Load the model for the grass
     terrain->generateObjects(110, "batu1", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
 
+    // load models
+    // -----------
+    player = new Model(FileSystem::getPath("models/oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
+    player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));
+
+    CollectibleManager collectibleManager;
+    // Add collectibles at random positions
+    for (int i = 0; i < 5; ++i) {
+        float x = static_cast<float>(rand() % terrain->getWidth());
+        float z = static_cast<float>(rand() % terrain->getHeight());
+        float y = terrain->getHeightAt(x, z);
+        collectibleManager.addCollectible(glm::vec3(x, y + 0.25f, z), "models/little_star/little_star.obj");
+        std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
+    }
+    GameController gameController(collectibleManager);
+
     std::vector<std::string> faces = {
         "images/skybox/right.jpg", "images/skybox/left.jpg", "images/skybox/top.jpg",
         "images/skybox/bottom.jpg", "images/skybox/front.jpg", "images/skybox/back.jpg"};
@@ -126,6 +137,8 @@ int main() {
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+
+    // glEnable(GL_DEPTH_TEST);
 
     isRotate = 0;
 
@@ -139,8 +152,8 @@ int main() {
         // Input handling
         processInput(window);
 
-        // Update camera to follow ourModel
-        camera.updateCameraVectors(ourModel->GetPosition(), 10.0f);
+        // Update camera to follow player
+        camera.updateCameraVectors(player->GetPosition(), 10.0f);
 
         // Rendering
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -152,32 +165,64 @@ int main() {
 
         // ** Render terrain **
         terrainShader.use();
+        int lightIndex = 0;
+        for (const auto &collectible : collectibleManager.getCollectibles()) {
+            if (!collectible.isCollected()) {
+                collectible.updateLight(terrainShader, lightIndex++);
+            }
+        }
+        terrainShader.setInt("numPointLights", lightIndex); // Set the number of point lights
+
+        // Set uniforms for the terrain (view, projection, model)
         terrainShader.setMat4("view", view);
         terrainShader.setMat4("projection", projection);
-        terrainShader.setVec3("viewPos", camera.Position);
-        terrainShader.setVec3("lightPos", lightPos);
-        terrainShader.setVec3("lightColor", lightColor);
+        glm::mat4 terrainModel = glm::mat4(1.0f); // Identity matrix for no transformation
+        terrainShader.setMat4("model", terrainModel);
+        // Render the terrain
+        terrain->render(terrainShader, vp);
+        // ** Render objects **
+        playerShader.use();
+        terrain->renderObjects(playerShader, vp);
+
+        // // set light
+        // lightingShader.use();
+        // // Set light position dan kamera (view position)
+        // lightingShader.setMat4("projection", projection);
+        // lightingShader.setMat4("view", view);
+        // lightingShader.setVec3("lightPos", lightPos);
+        // lightingShader.setVec3("viewPos", camera.Position);
+        // lightingShader.setVec3("objectColor", objectColor);
+        // lightingShader.setVec3("lightColor", lightColor);
+        // lightingShader.setFloat("shininess", 100.0f);
 
         glm::mat4 terrainModel = glm::mat4(1.0f); // Adjust position/scale as needed
-        terrainShader.setMat4("model", terrainModel);
-        terrain->render(terrainShader, vp);
+        lightingShader.setMat4("model", terrainModel);
+        terrain->render(lightingShader, vp);
 
-        // ** Render ourModel **
-        ourShader.use();
+        // ** Render player **
+        playerShader.use();
         glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, ourModel->GetPosition());
-        model = glm::rotate(model, glm::radians(ourModel->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f));
-        ourShader.setMat4("projection", projection);
-        ourShader.setMat4("view", view);
-        ourShader.setMat4("model", model);
-        ourModel->Draw(ourShader);
-
-        // ** Render objects **
-        ourShader.use();
-        terrain->renderObjects(ourShader, vp);
+        model = glm::translate(model, player->GetPosition());
+        model = glm::rotate(model, glm::radians(player->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f));
+        playerShader.setMat4("projection", projection);
+        playerShader.setMat4("view", view);
+        playerShader.setMat4("model", model);
+        player->Draw(playerShader);
 
         // ** Render the skybox **
         skybox.render(camera.GetViewMatrix(), projection, camera);
+
+        // Check for player collision with collectibles
+        float playerRadius = 0.5f; // Example radius for collision detection
+        gameController.update(player->GetPosition(), playerRadius);
+        if (gameController.hasPlayerWon()) {
+            std::cout << "Player has collected all items! You win!" << std::endl;
+            break; // Or trigger win screen
+        }
+
+        // Render collectibles
+        collectibleShader.use();
+        collectibleManager.renderAll(collectibleShader, vp);
 
         // Swap buffers and poll events
         glfwSwapBuffers(window);
@@ -188,7 +233,7 @@ int main() {
     // ------------------------------------------------------------------
     glfwTerminate();
     delete terrain;
-    delete ourModel;
+    delete player;
     return 0;
 }
 
@@ -204,7 +249,6 @@ void processInput(GLFWwindow *window) {
         glfwSetWindowShouldClose(window, true);
 
     glm::vec3 moveDirection(0.0f);
-    float speed = 5.0f * deltaTime; // Adjust speed as needed
 
     // Flatten the camera's Front and Right vectors for movement on the XZ plane
     glm::vec3 frontXZ = glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z));
@@ -223,9 +267,10 @@ void processInput(GLFWwindow *window) {
 
     // Normalize the movement direction if there's input
     if (glm::length(moveDirection) > 0.0f) {
+        float speed = 5.0f * deltaTime;                // Adjust speed as needed
         moveDirection = glm::normalize(moveDirection); // Ensure uniform speed
 
-        glm::vec3 currentPosition = ourModel->GetPosition();
+        glm::vec3 currentPosition = player->GetPosition();
         glm::vec3 newPosition = currentPosition + moveDirection * speed;
 
         // Keep the model on top of the terrain
@@ -239,12 +284,12 @@ void processInput(GLFWwindow *window) {
         newPosition.x = glm::clamp(newPosition.x, 0.0f, (float)(terrain->getWidth() - 1));
         newPosition.z = glm::clamp(newPosition.z, 0.0f, (float)(terrain->getHeight() - 1));
         // Set the model's new position
-        ourModel->SetPosition(newPosition);
+        player->SetPosition(newPosition);
 
         // Calculate target rotation (yaw angle) based on moveDirection
         float targetYaw = glm::degrees(glm::atan(moveDirection.z, moveDirection.x));
         // Get the current yaw angle of the model
-        float currentYaw = ourModel->GetRotation().y;
+        float currentYaw = player->GetRotation().y;
         if (isRotate) {
             // Ensure angles are in the range [0, 360)
             targetYaw = fmod(targetYaw + 360.0f, 360.0f);
@@ -258,20 +303,20 @@ void processInput(GLFWwindow *window) {
             currentYaw = fmod(currentYaw + 360.0f, 360.0f);
 
             // Update model's rotation (yaw only)
-            ourModel->SetRotation(glm::vec3(0.0f, currentYaw, 0.0f));
+            player->SetRotation(glm::vec3(0.0f, currentYaw, 0.0f));
 
-            // std::cout << "Current Yaw: " << currentYaw
-            //           << ", Target Yaw: " << targetYaw
-            //           << ", Rotation Speed: " << rotationSpeed << std::endl;
         } else {
             // Smoothly interpolate (lerp) between current and target yaw angles
             float smoothFactor = 0.1f; // Adjust for more/less smoothness
             float newYaw = glm::mix(currentYaw, -targetYaw + 90, smoothFactor);
 
             // Update model's rotation (yaw only)
-            ourModel->SetRotation(glm::vec3(0.0f, newYaw, 0.0f));
+            player->SetRotation(glm::vec3(0.0f, newYaw, 0.0f));
         }
     }
+}
+
+void transformPlayer(glm::vec3 moveDirection) {
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -302,7 +347,7 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
 
     float distance = 5.0f; // Set the desired distance from the model
     // Pass model position and distance to ProcessMouseMovement
-    camera.ProcessMouseMovement(xoffset, yoffset, ourModel->GetPosition(), distance);
+    camera.ProcessMouseMovement(xoffset, yoffset, player->GetPosition(), distance);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
@@ -311,7 +356,7 @@ void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
 }
 void updateCamera() {
-    glm::vec3 modelPosition = ourModel->GetPosition();
+    glm::vec3 modelPosition = player->GetPosition();
     float distance = 10.0f; // Desired fixed distance from the model
     camera.Position = modelPosition + cameraOffset;
     camera.Front = glm::normalize(modelPosition - camera.Position);
