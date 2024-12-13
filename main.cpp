@@ -97,7 +97,6 @@ int main() {
     // -------------------------
     Shader playerShader("shaders/model.vs", "shaders/model.fs");
     Shader terrainShader("shaders/terrain.vs", "shaders/terrain.fs");
-    Shader lightingShader("shaders/lighting.vs", "shaders/lighting.fs");
     Shader collectibleShader("shaders/collectible.vs", "shaders/collectible.fs");
 
     // Create the terrain using the heightmap
@@ -112,6 +111,9 @@ int main() {
     
     terrain->addModel("batu1", "models/batu1/batu1.obj");       // Load the model for the grass
     terrain->generateObjects(110, "batu1", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
+    
+    terrain->addModel("tree", "models/pohon/pohon.obj");       // Load the model for the grass
+    terrain->generateObjects(1000, "tree", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
 
     // load models
     // -----------
@@ -176,6 +178,9 @@ int main() {
         // Set uniforms for the terrain (view, projection, model)
         terrainShader.setMat4("view", view);
         terrainShader.setMat4("projection", projection);
+        terrainShader.setVec3("lightPos", lightPos);
+        terrainShader.setVec3("viewPos", camera.Position);
+        terrainShader.setVec3("lightColor", lightColor);
         glm::mat4 terrainModel = glm::mat4(1.0f); // Identity matrix for no transformation
         terrainShader.setMat4("model", terrainModel);
         // Render the terrain
@@ -189,15 +194,11 @@ int main() {
         // // Set light position dan kamera (view position)
         // lightingShader.setMat4("projection", projection);
         // lightingShader.setMat4("view", view);
-        // lightingShader.setVec3("lightPos", lightPos);
-        // lightingShader.setVec3("viewPos", camera.Position);
-        // lightingShader.setVec3("objectColor", objectColor);
-        // lightingShader.setVec3("lightColor", lightColor);
         // lightingShader.setFloat("shininess", 100.0f);
 
-        glm::mat4 terrainModel = glm::mat4(1.0f); // Adjust position/scale as needed
-        lightingShader.setMat4("model", terrainModel);
-        terrain->render(lightingShader, vp);
+        // glm::mat4 terrainModel = glm::mat4(1.0f); // Adjust position/scale as needed
+        // lightingShader.setMat4("model", terrainModel);
+        // terrain->render(lightingShader, vp);
 
         // ** Render player **
         playerShader.use();
