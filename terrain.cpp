@@ -44,6 +44,7 @@ bool Terrain::loadHeightmap(const std::string &path) {
     std::cout << "Heightmap loaded successfully! Width: " << heightmapWidth << ", Height: " << heightmapHeight << std::endl;
     return true;
 }
+
 void Terrain::generateTerrain() {
     minCorner = glm::vec3(0.0f, FLT_MAX, 0.0f);                                 // Initialize minCorner
     maxCorner = glm::vec3((float)terrainWidth, -FLT_MAX, (float)terrainHeight); // Initialize maxCorner
@@ -158,7 +159,7 @@ void Terrain::render(Shader &shader, const glm::mat4 &vp) {
 
     // Perform frustum culling
     if (!isInsideFrustum(planes)) {
-        return; // Skip rendering if the terrain is outside the frustum
+        std::cout << "Failed to load texture" << std::endl;
     }
 
     // Bind the terrain's texture
@@ -175,6 +176,7 @@ void Terrain::render(Shader &shader, const glm::mat4 &vp) {
 bool Terrain::loadTexture(const std::string &texturePath) {
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
+    std::cout << "Generated bind ID: " << textureID << std::endl;
 
     int width, height, nrChannels;
     unsigned char *data = stbi_load(texturePath.c_str(), &width, &height, &nrChannels, 0);
@@ -237,8 +239,7 @@ void Terrain::addModel(const std::string &type, const std::string &modelPath) {
     models[type].push_back(model);
 }
 
-void Terrain::generateObjects(int count, const std::string &type,
-                              float minHeight, float maxHeight, float spread) {
+void Terrain::generateObjects(int count, const std::string &type, float minHeight, float maxHeight, float spread) {
     for (int i = 0; i < count; ++i) {
         // Generate random position on the terrain
         float x = static_cast<float>(rand() % terrainWidth);
@@ -254,7 +255,7 @@ void Terrain::generateObjects(int count, const std::string &type,
             // Add the object to the list
             objects.push_back({glm::vec3(x, getHeightAt(x, z), z), modelIndex, type});
         }
-        cout << "Object generated at: " << x << ", " << y << ", " << z << endl;
+        // cout << "Object generated at: " << x << ", " << y << ", " << z << endl;
     }
 }
 
@@ -267,10 +268,12 @@ void Terrain::renderObjects(Shader &objectShader, const glm::mat4 &vp) {
 
         if (object.type == "tree") {
             model = glm::scale(model, glm::vec3(1.0f)); // Example scaling
-        } else if (object.type == "rock") {
+        } else if (object.type == "batu") {
             model = glm::scale(model, glm::vec3(0.5f));
         } else if (object.type == "grass") {
             model = glm::scale(model, glm::vec3(0.2f));
+        } else if (object.type == "batu1") {
+            model = glm::scale(model, glm::vec3(0.5f));
         }
 
         objectShader.setMat4("model", model);

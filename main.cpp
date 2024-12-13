@@ -119,7 +119,7 @@ int main() {
     terrain->generateObjects(100, "batu", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
     
     terrain->addModel("batu1", "models/batu1/batu1.obj");       // Load the model for the grass
-    terrain->generateObjects(110, "batu1", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
+    terrain->generateObjects(80, "batu1", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
 
     std::vector<std::string> faces = {
         "images/skybox/right.jpg", "images/skybox/left.jpg", "images/skybox/top.jpg",
