@@ -44,8 +44,8 @@ Model *player;
 Terrain *terrain;
 glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f); // Adjust for desired fixed distance and height
 
-glm::vec3 lightPos(100.0f, 100.0f, 100.0f);  // Position of light source
-glm::vec3 lightColor(1.0f, 1.0f, 1.0f); // Light color (white light)
+glm::vec3 lightPos(100.0f, 100.0f, 100.0f); // Position of light source
+glm::vec3 lightColor(1.0f, 1.0f, 1.0f);     // Light color (white light)
 
 int main() {
 
@@ -96,7 +96,7 @@ int main() {
     // build and compile shaders
     // -------------------------
     Shader playerShader("shaders/model.vs", "shaders/model.fs");
-    Shader terrainShader("shaders/terrain.vs", "shaders/terrain.fs");
+    Shader terrainShader("shaders/terrain_test.vs", "shaders/terrain_test.fs");
     Shader collectibleShader("shaders/collectible.vs", "shaders/collectible.fs");
 
     // Create the terrain using the heightmap
@@ -105,15 +105,18 @@ int main() {
 
     terrain->addModel("grass", "models/grass/grass.obj");       // Load the model for the grass
     terrain->generateObjects(1000, "grass", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
-    
-    terrain->addModel("batu", "models/batu/batu.obj");       // Load the model for the grass
-    terrain->generateObjects(100, "batu", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
-    
-    terrain->addModel("batu1", "models/batu1/batu1.obj");       // Load the model for the grass
-    terrain->generateObjects(110, "batu1", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
-    
-    terrain->addModel("tree", "models/pohon/pohon.obj");       // Load the model for the grass
-    terrain->generateObjects(1000, "tree", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
+
+    terrain->addModel("rock", "models/rock_scan/rock_scan.obj");
+    terrain->generateObjects(100, "rock", 0.0f, 10.0f, 0.5f);
+
+    // terrain->addModel("batu", "models/batu/batu.obj");
+    // terrain->generateObjects(100, "batu", 0.0f, 10.0f, 0.5f);
+
+    // terrain->addModel("batu1", "models/batu1/batu1.obj");
+    // terrain->generateObjects(110, "batu1", 0.0f, 10.0f, 0.5f);
+
+    // terrain->addModel("tree", "models/pohon/pohon.obj");
+    // terrain->generateObjects(1000, "tree", 0.0f, 10.0f, 0.5f);
 
     // load models
     // -----------
@@ -141,6 +144,9 @@ int main() {
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
     // glEnable(GL_DEPTH_TEST);
+
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     isRotate = 0;
 
@@ -186,7 +192,7 @@ int main() {
         // Render the terrain
         terrain->render(terrainShader, vp);
         // ** Render objects **
-        playerShader.use();
+        // playerShader.use();
         terrain->renderObjects(playerShader, vp);
 
         // // set light

@@ -66,6 +66,18 @@ public:
         return rotation;
     }
 
+    // Method to retrieve the first diffuse texture ID
+    unsigned int GetTextureID() const {
+        for (const auto &mesh : meshes) {
+            for (const auto &texture : mesh.textures) {
+                if (texture.type == "texture_diffuse") {
+                    return texture.id; // Return the ID of the first diffuse texture
+                }
+            }
+        }
+        return 0; // Return 0 if no diffuse texture is found
+    }
+
 private:
     glm::vec3 position;
     glm::vec3 rotation;
@@ -74,8 +86,8 @@ private:
     void loadModel(string const &path) {
         // ͨ�� ASSIMP ����ģ���ļ�
         Assimp::Importer importer;
-        // ��������ģ�����е�ͼԪ��״�任Ϊ������ | �ڴ�����ʱ��תy����������� | Ϊÿ�����صĶ���������͵�Tangent��Bitangent����
-        const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+        const aiScene *scene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_CalcTangentSpace);
+
         // �ж��Ƿ��д���
         if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
             cout << "ERROR::ASSIMP:: " << importer.GetErrorString() << endl;
@@ -108,17 +120,17 @@ private:
         vector<unsigned int> indices;
         vector<Texture> textures;
 
-        // ���� mesh �����ж���
         for (unsigned int i = 0; i < mesh->mNumVertices; i++) {
             Vertex vertex;
-            // ��Ϊassimpʹ�����Լ��������࣬���಻��ֱ��ת��Ϊglm��vec3�࣬����������Ƚ����ݴ��䵽��ռλ��glm::vec3
             glm::vec3 vector;
-            // λ��
+
+            // Position
             vector.x = mesh->mVertices[i].x;
             vector.y = mesh->mVertices[i].y;
             vector.z = mesh->mVertices[i].z;
             vertex.Position = vector;
-            // ����
+
+            // Normal
             if (mesh->mNormals) {
                 vector.x = mesh->mNormals[i].x;
                 vector.y = mesh->mNormals[i].y;
@@ -127,18 +139,18 @@ private:
             } else {
                 vertex.Normal = glm::vec3(0.0f, 0.0f, 0.0f);
             }
-            // ��������
-            if (mesh->mTextureCoords[0]) // �����Ƿ����������ꣿ
-            {
+
+            // Texture Coordinates
+            if (mesh->mTextureCoords[0]) {
                 glm::vec2 vec;
-                // ����һ��������԰���8�ֲ�ͬ���������꣬���Ǽ������ǲ���ʹ������һ����������ж�����������ģ��,������������ȡ0
                 vec.x = mesh->mTextureCoords[0][i].x;
-                vec.y = mesh->mTextureCoords[0][i].y;
+                vec.y = mesh->mTextureCoords[0][i].y; // Check for flipping issues
                 vertex.TexCoords = vec;
             } else {
                 vertex.TexCoords = glm::vec2(0.0f, 0.0f);
             }
-            // tangent
+
+            // Tangents and Bitangents
             if (mesh->mTangents) {
                 vector.x = mesh->mTangents[i].x;
                 vector.y = mesh->mTangents[i].y;
@@ -147,7 +159,7 @@ private:
             } else {
                 vertex.Tangent = glm::vec3(0.0f, 0.0f, 0.0f);
             }
-            // bitangent
+
             if (mesh->mBitangents) {
                 vector.x = mesh->mBitangents[i].x;
                 vector.y = mesh->mBitangents[i].y;
@@ -156,40 +168,25 @@ private:
             } else {
                 vertex.Bitangent = glm::vec3(0.0f, 0.0f, 0.0f);
             }
+
             vertices.push_back(vertex);
         }
 
-        // ��������
+        // Process indices
         for (unsigned int i = 0; i < mesh->mNumFaces; i++) {
             aiFace face = mesh->mFaces[i];
-            // ������������������洢��������
-            for (unsigned int j = 0; j < face.mNumIndices; j++)
+            for (unsigned int j = 0; j < face.mNumIndices; j++) {
                 indices.push_back(face.mIndices[j]);
+            }
         }
 
-        // ��������
+        // Process material textures
         aiMaterial *material = scene->mMaterials[mesh->mMaterialIndex];
-
-        // �ٶ� shader �ڵĲ�����ر�����������ѭ���¹淶����NΪ0�����ֵ��һ�����֣�
-        // diffuse: texture_diffuseN
-        // specular: texture_specularN
-        // normal: texture_normalN
-        // height: texture_heightN
-
-        // diffuse maps
         vector<Texture> diffuseMaps = loadMaterialTextures(material, aiTextureType_DIFFUSE, "texture_diffuse");
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
-        // specular maps
         vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
-        // normal maps
-        std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
-        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
-        // height maps
-        std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
-        textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
-        // ����һ�� Mesh ����
         return Mesh(vertices, indices, textures);
     }
 
@@ -238,12 +235,13 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
         else if (nrComponents == 3)
             format = GL_RGB;
         else if (nrComponents == 4)
-            format = GL_RGBA;
+            format = GL_RGBA; // Support alpha channel
 
         glBindTexture(GL_TEXTURE_2D, textureID);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
 
+        // Set texture wrapping and filtering
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -257,4 +255,5 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
 
     return textureID;
 }
+
 #endif

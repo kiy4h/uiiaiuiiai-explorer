@@ -272,13 +272,19 @@ void Terrain::renderObjects(Shader &objectShader, const glm::mat4 &vp) {
         } else if (object.type == "grass") {
             model = glm::scale(model, glm::vec3(0.2f));
         } else if (object.type == "batu") {
-            model = glm::scale(model, glm::vec3(0.15f));
+            model = glm::scale(model, glm::vec3(0.5f));
         } else if (object.type == "batu1") {
             model = glm::scale(model, glm::vec3(0.2f));
         }
 
         objectShader.setMat4("model", model);
         objectShader.setMat4("viewProjection", vp);
+
+        // Explicitly bind the correct texture for this model
+        unsigned int textureID = models[object.type][object.modelIndex].GetTextureID();
+        glActiveTexture(GL_TEXTURE0);              // Use texture unit 0
+        glBindTexture(GL_TEXTURE_2D, textureID);   // Bind the object's texture
+        objectShader.setInt("texture_diffuse", 0); // Ensure shader knows which texture unit to use
 
         // Render the selected model
         models[object.type][object.modelIndex].Draw(objectShader);
