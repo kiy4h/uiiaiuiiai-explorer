@@ -278,7 +278,7 @@ void processInput(GLFWwindow *window) {
         float terrainHeight = terrain->getHeightAt(newPosition.x, newPosition.z);
 
         // Smoothly interpolate the Y position towards the target height
-        float smoothFactor = 0.1f; // Adjust this value for more/less smoothness
+        float smoothFactor = 0.7f; // Adjust this value for more/less smoothness
         newPosition.y = glm::mix(currentPosition.y, terrainHeight, smoothFactor);
 
         // Clamp position to stay within terrain bounds
@@ -308,8 +308,8 @@ void processInput(GLFWwindow *window) {
 
         } else {
             // Smoothly interpolate (lerp) between current and target yaw angles
-            float smoothFactor = 0.1f; // Adjust for more/less smoothness
-            float newYaw = glm::mix(currentYaw, -targetYaw + 90, smoothFactor);
+            float smoothFactor = 0.3f; // Adjust for more/less smoothness
+            float newYaw = glm::mix(currentYaw, -targetYaw + 90 + 360, smoothFactor);
 
             // Update model's rotation (yaw only)
             player->SetRotation(glm::vec3(0.0f, newYaw, 0.0f));
