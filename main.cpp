@@ -184,6 +184,19 @@ int main() {
         glm::mat4 view = camera.GetViewMatrix();
         glm::mat4 vp = projection * view;
 
+        // ** Render the skybox **
+        skybox.render(camera.GetViewMatrix(), projection, camera);
+
+        // ** Render player **
+        playerShader.use();
+        glm::mat4 model = glm::mat4(1.0f);
+        model = glm::translate(model, player->GetPosition());
+        model = glm::rotate(model, glm::radians(player->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f));
+        playerShader.setMat4("projection", projection);
+        playerShader.setMat4("view", view);
+        playerShader.setMat4("model", model);
+        player->Draw(playerShader);
+
         // ** Render terrain **
         terrainShader.use();
         terrainShader.setMat4("view", view);
@@ -196,21 +209,7 @@ int main() {
         terrain->render(terrainShader, vp); // Render the terrain
 
         // ** Render objects **
-        // playerShader.use();
         terrain->renderObjects(playerShader, vp);
-
-        // ** Render player **
-        playerShader.use();
-        glm::mat4 model = glm::mat4(1.0f);
-        model = glm::translate(model, player->GetPosition());
-        model = glm::rotate(model, glm::radians(player->GetRotation().y), glm::vec3(0.0f, 1.0f, 0.0f));
-        playerShader.setMat4("projection", projection);
-        playerShader.setMat4("view", view);
-        playerShader.setMat4("model", model);
-        player->Draw(playerShader);
-
-        // ** Render the skybox **
-        skybox.render(camera.GetViewMatrix(), projection, camera);
 
         // Render the scoreboard
         std::string scoreText = "Score: " + std::to_string(gameController.getCollectedCount());

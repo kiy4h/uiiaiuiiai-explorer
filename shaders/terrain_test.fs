@@ -49,9 +49,9 @@ void main() {
     vec3 result = ambient; // Start with ambient light
 
     // Accumulate light contribution from point lights
-    for (int i = 0; i < numPointLights; ++i) {
-        result += calculateBlinnPhong(pointLights[i], norm, FragPos, viewDir);
-    }
+    // for (int i = 0; i < numPointLights; ++i) {
+    //     result += calculateBlinnPhong(pointLights[i], norm, FragPos, viewDir);
+    // }
 
     // Final color: base texture color modulated by light contributions
     FragColor = vec4(texColor.rgb * result, texColor.a);

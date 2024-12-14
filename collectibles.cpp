@@ -83,4 +83,5 @@ void CollectibleManager::uncollectAll() {
     for (auto &collectible : collectibles) {
         collectible.uncollect();
     }
+    // TODO: other than uncollect, also re-randomize collectibles position
 }
