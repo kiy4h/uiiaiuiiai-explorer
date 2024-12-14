@@ -56,7 +56,6 @@ public:
         WorldUp = up;
         Yaw = yaw;
         Pitch = pitch;
-        // updateCameraVectors();
     }
 
     // ���캯���ͱ���ֵ
@@ -70,7 +69,6 @@ public:
         WorldUp = glm::vec3(upX, upY, upZ);
         Yaw = yaw;
         Pitch = pitch;
-        // updateCameraVectors();
     }
 
     // ������ͼ����
@@ -112,9 +110,6 @@ public:
             Pitch = 89.0f;
         if (Pitch < -89.0f)
             Pitch = -89.0f;
-
-        // Update camera vectors with model position and distance
-        // updateCameraVectors(modelPosition, distance);
     }
 
     // �����������������
@@ -131,7 +126,6 @@ public:
         Position = position;
         Yaw = yaw;
         Pitch = 0.0f;
-        // updateCameraVectors();
     }
 
     void ZoomIn() {
@@ -150,18 +144,6 @@ public:
         if (Zoom > ZOOM)
             Zoom -= ZOOM_SPEED / 2;
     }
-
-    // void updateCameraVectors() {
-    //     // �����µ� Front ����
-    //     glm::vec3 front;
-    //     front.x = -sin(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    //     front.y = sin(glm::radians(Pitch));
-    //     front.z = -cos(glm::radians(Yaw)) * cos(glm::radians(Pitch));
-    //     Front = glm::normalize(front);
-    //     // ���¼��� Right �� Up ����
-    //     Right = glm::normalize(glm::cross(Front, WorldUp));
-    //     Up = glm::normalize(glm::cross(Right, Front));
-    // }
 
     void updateCameraVectors(glm::vec3 modelPosition, float distance) {
         // Calculate the offset using spherical coordinates

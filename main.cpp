@@ -12,6 +12,7 @@
 #include "filesystem.h"
 #include "game_controller.h"
 #include "model.h"
+#include "popup.h"
 #include "shader.h"
 #include "skybox.h"
 #include "terrain.h"
@@ -23,7 +24,6 @@ void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
-void updateCamera();
 
 // settings
 const unsigned int SCR_WIDTH = 800;
@@ -39,6 +39,7 @@ bool firstMouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 int isRotate;
+bool gameWon, gameLost;
 
 GLuint terrainVAO;
 Model *player;
@@ -99,13 +100,13 @@ int main() {
     Shader playerShader("shaders/model.vs", "shaders/model.fs");
     Shader terrainShader("shaders/terrain_test.vs", "shaders/terrain_test.fs");
     Shader collectibleShader("shaders/collectible.vs", "shaders/collectible.fs");
+    Shader overlayShader("shaders/overlay.vs", "shaders/overlay.fs");
 
     // Create the terrain using the heightmap
 
-    
     terrain = new Terrain("images/height-map.png", 10.0f, 256, 256);
     terrain->loadTexture("images/grass.jpg"); // Load the texture for the terrain
-    
+
     terrain->addModel("grass", "models/grass/grass.obj");       // Load the model for the grass
     terrain->generateObjects(1000, "grass", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
 
@@ -129,7 +130,9 @@ int main() {
     player = new Model(FileSystem::getPath("models/oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
     player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));
 
+    // collectibles: Create a collectible manager and add collectibles
     CollectibleManager collectibleManager;
+    GameController gameController(collectibleManager);
     // Add collectibles at random positions
     for (int i = 0; i < 5; ++i) {
         float x = static_cast<float>(rand() % terrain->getWidth());
@@ -138,7 +141,6 @@ int main() {
         collectibleManager.addCollectible(glm::vec3(x, y + 0.25f, z), "models/little_star/little_star.obj");
         std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
     }
-    GameController gameController(collectibleManager);
 
     std::vector<std::string> faces = {
         "images/skybox/right.jpg", "images/skybox/left.jpg", "images/skybox/top.jpg",
@@ -147,11 +149,15 @@ int main() {
     Skybox skybox(faces, skyboxShader);
 
     // Load font
-    TextRenderer textRenderer("FredokaOne-Regular.ttf", 36);
+    TextRenderer textRenderer("FredokaOne-Regular.ttf", 28);
     Shader textShader("shaders/text.vs", "shaders/text.fs");
     glm::mat4 projection = glm::ortho(0.0f, (float)SCR_WIDTH, 0.0f, (float)SCR_HEIGHT);
     textShader.use();
     textShader.setMat4("projection", projection);
+
+    // Create popups
+    Popup winPopup("You Win!", glm::vec3(1.0f, 1.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
+    Popup losePopup("You Lose!", glm::vec3(1.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -162,6 +168,12 @@ int main() {
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     isRotate = 0;
+    gameWon = false;
+    gameLost = false;
+    float countdownTimer = 30; // 5 * 60.0f; // 5 minutes
+    lastFrame = glfwGetTime();
+
+    cout << "Game started!" << endl;
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
@@ -170,8 +182,26 @@ int main() {
         deltaTime = currentFrame - lastFrame;
         lastFrame = currentFrame;
 
-        // Input handling
-        processInput(window);
+        // Input handling: Check for ESC key to exit
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+            glfwSetWindowShouldClose(window, true);
+
+        // Update game logic
+        if (!gameWon && !gameLost) {
+            // Check for player collision with collectibles
+            float playerRadius = 0.5f; // Example radius for collision detection
+            gameController.update(player->GetPosition(), playerRadius);
+
+            // Check for game over conditions
+            gameWon = gameController.hasPlayerWon();
+            gameLost = countdownTimer <= 0.0f;
+
+            // Input handling
+            processInput(window);
+
+            // Update countdown timer
+            countdownTimer -= deltaTime;
+        }
 
         // Update camera to follow player
         camera.updateCameraVectors(player->GetPosition(), 10.0f);
@@ -186,15 +216,6 @@ int main() {
 
         // ** Render terrain **
         terrainShader.use();
-        // int lightIndex = 0;
-        // for (const auto &collectible : collectibleManager.getCollectibles()) {
-        //     if (!collectible.isCollected()) {
-        //         collectible.updateLight(terrainShader, lightIndex++);
-        //     }
-        // }
-        // terrainShader.setInt("numPointLights", lightIndex); // Set the number of point lights
-
-        // Set uniforms for the terrain (view, projection, model)
         terrainShader.setMat4("view", view);
         terrainShader.setMat4("projection", projection);
         terrainShader.setVec3("lightPos", lightPos);
@@ -202,8 +223,8 @@ int main() {
         terrainShader.setVec3("lightColor", lightColor);
         glm::mat4 terrainModel = glm::mat4(1.0f); // Identity matrix for no transformation
         terrainShader.setMat4("model", terrainModel);
-        // Render the terrain
-        terrain->render(terrainShader, vp);
+        terrain->render(terrainShader, vp); // Render the terrain
+
         // ** Render objects **
         // playerShader.use();
         terrain->renderObjects(playerShader, vp);
@@ -221,21 +242,38 @@ int main() {
         // ** Render the skybox **
         skybox.render(camera.GetViewMatrix(), projection, camera);
 
-        // Check for player collision with collectibles
-        float playerRadius = 0.5f; // Example radius for collision detection
-        gameController.update(player->GetPosition(), playerRadius);
-        if (gameController.hasPlayerWon()) {
-            std::cout << "Player has collected all items! You win!" << std::endl;
-            break; // Or trigger win screen
-        }
-
         // Render the scoreboard
-        std::string scoreText = "Skor: " + std::to_string(gameController.getCollectedCount());
+        std::string scoreText = "Score: " + std::to_string(gameController.getCollectedCount());
         textRenderer.RenderText(textShader, scoreText, SCR_WIDTH - 150.0f, SCR_HEIGHT - 50.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // Top-right corner
+
+        // Render timer
+
+        std::string timerText = "Time: " + std::to_string(static_cast<int>(countdownTimer / 60.0f)) + "m " + std::to_string(static_cast<int>(countdownTimer) % 60) + "s";
+        textRenderer.RenderText(textShader, timerText, 20.0f, SCR_HEIGHT - 50.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 
         // Render collectibles
         collectibleShader.use();
         collectibleManager.renderAll(collectibleShader, vp);
+
+        // Check for game over conditions
+        if (gameWon) {
+            winPopup.show();
+        } else if (gameLost) {
+            losePopup.show();
+        }
+
+        // Render popups
+        if (winPopup.isVisible()) {
+            winPopup.render(textRenderer, overlayShader, textShader, SCR_WIDTH, SCR_HEIGHT);
+        }
+        if (losePopup.isVisible()) {
+            losePopup.render(textRenderer, overlayShader, textShader, SCR_WIDTH, SCR_HEIGHT);
+        }
+
+        if ((winPopup.isVisible() || losePopup.isVisible()) && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
+            // restart game
+            // restartGame(); // Reset game state
+        }
 
         // Swap buffers and poll events
         glfwSwapBuffers(window);
@@ -258,8 +296,6 @@ float lerp(float a, float b, float t) {
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, true);
 
     glm::vec3 moveDirection(0.0f);
 
@@ -367,11 +403,4 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
     camera.ProcessMouseScroll(static_cast<float>(yoffset));
-}
-void updateCamera() {
-    glm::vec3 modelPosition = player->GetPosition();
-    float distance = 10.0f; // Desired fixed distance from the model
-    camera.Position = modelPosition + cameraOffset;
-    camera.Front = glm::normalize(modelPosition - camera.Position);
-    // camera.updateCameraVectors();
 }
