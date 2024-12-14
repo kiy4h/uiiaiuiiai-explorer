@@ -10,3 +10,7 @@ void GameController::update(const glm::vec3 &playerPosition, float playerRadius)
 bool GameController::hasPlayerWon() const {
     return collectibleManager.getCollectedCount() == collectibleManager.getTotalCount();
 }
+
+int GameController::getCollectedCount() const {
+    return collectibleManager.getCollectedCount();
+}

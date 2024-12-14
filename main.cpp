@@ -15,6 +15,7 @@
 #include "shader.h"
 #include "skybox.h"
 #include "terrain.h"
+#include "text_renderer.h"
 
 #include <iostream>
 
@@ -140,6 +141,13 @@ int main() {
     Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.fs");
     Skybox skybox(faces, skyboxShader);
 
+    // Load font
+    TextRenderer textRenderer("FredokaOne-Regular.ttf", 36);
+    Shader textShader("shaders/text.vs", "shaders/text.fs");
+    glm::mat4 projection = glm::ortho(0.0f, (float)SCR_WIDTH, 0.0f, (float)SCR_HEIGHT);
+    textShader.use();
+    textShader.setMat4("projection", projection);
+
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -173,13 +181,13 @@ int main() {
 
         // ** Render terrain **
         terrainShader.use();
-        int lightIndex = 0;
-        for (const auto &collectible : collectibleManager.getCollectibles()) {
-            if (!collectible.isCollected()) {
-                collectible.updateLight(terrainShader, lightIndex++);
-            }
-        }
-        terrainShader.setInt("numPointLights", lightIndex); // Set the number of point lights
+        // int lightIndex = 0;
+        // for (const auto &collectible : collectibleManager.getCollectibles()) {
+        //     if (!collectible.isCollected()) {
+        //         collectible.updateLight(terrainShader, lightIndex++);
+        //     }
+        // }
+        // terrainShader.setInt("numPointLights", lightIndex); // Set the number of point lights
 
         // Set uniforms for the terrain (view, projection, model)
         terrainShader.setMat4("view", view);
@@ -226,6 +234,10 @@ int main() {
             std::cout << "Player has collected all items! You win!" << std::endl;
             break; // Or trigger win screen
         }
+
+        // Render the scoreboard
+        std::string scoreText = "Skor: " + std::to_string(gameController.getCollectedCount());
+        textRenderer.RenderText(textShader, scoreText, SCR_WIDTH - 150.0f, SCR_HEIGHT - 50.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // Top-right corner
 
         // Render collectibles
         collectibleShader.use();

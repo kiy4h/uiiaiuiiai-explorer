@@ -9,6 +9,7 @@ public:
 
     void update(const glm::vec3 &playerPosition, float playerRadius);
     bool hasPlayerWon() const;
+    int getCollectedCount() const;
 
 private:
     CollectibleManager &collectibleManager;
