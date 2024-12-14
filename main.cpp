@@ -101,9 +101,11 @@ int main() {
     Shader collectibleShader("shaders/collectible.vs", "shaders/collectible.fs");
 
     // Create the terrain using the heightmap
+
+    
     terrain = new Terrain("images/height-map.png", 10.0f, 256, 256);
     terrain->loadTexture("images/grass.jpg"); // Load the texture for the terrain
-
+    
     terrain->addModel("grass", "models/grass/grass.obj");       // Load the model for the grass
     terrain->generateObjects(1000, "grass", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
 
@@ -111,13 +113,16 @@ int main() {
     terrain->generateObjects(100, "rock", 0.0f, 10.0f, 0.5f);
 
     // terrain->addModel("batu", "models/batu/batu.obj");
-    // terrain->generateObjects(100, "batu", 0.0f, 10.0f, 0.5f);
+    // terrain->generateObjects(10, "batu", 0.0f, 10.0f, 0.5f);
 
-    // terrain->addModel("batu1", "models/batu1/batu1.obj");
-    // terrain->generateObjects(110, "batu1", 0.0f, 10.0f, 0.5f);
+    terrain->addModel("bush", "models/bush/shrub.obj");
+    terrain->generateObjects(1000, "bush", 0.0f, 10.0f, 0.5f);
 
-    // terrain->addModel("tree", "models/pohon/pohon.obj");
-    // terrain->generateObjects(1000, "tree", 0.0f, 10.0f, 0.5f);
+    terrain->addModel("tree", "models/pohon/lowpoly_tree.obj");
+    terrain->generateObjects(500, "tree", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
+
+    // terrain->addModel("tree", "models/cemara/cemara.obj");       // Load the model for the grass
+    // terrain->generateObjects(150, "tree", 0.0f, 10.0f, 0.5f);
 
     // load models
     // -----------
@@ -202,17 +207,6 @@ int main() {
         // ** Render objects **
         // playerShader.use();
         terrain->renderObjects(playerShader, vp);
-
-        // // set light
-        // lightingShader.use();
-        // // Set light position dan kamera (view position)
-        // lightingShader.setMat4("projection", projection);
-        // lightingShader.setMat4("view", view);
-        // lightingShader.setFloat("shininess", 100.0f);
-
-        // glm::mat4 terrainModel = glm::mat4(1.0f); // Adjust position/scale as needed
-        // lightingShader.setMat4("model", terrainModel);
-        // terrain->render(lightingShader, vp);
 
         // ** Render player **
         playerShader.use();
