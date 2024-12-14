@@ -15,7 +15,6 @@
 #include "popup.h"
 #include "shader.h"
 #include "skybox.h"
-#include "terrain.h"
 #include "text_renderer.h"
 
 #include <iostream>
@@ -102,45 +101,22 @@ int main() {
     Shader collectibleShader("shaders/collectible.vs", "shaders/collectible.fs");
     Shader overlayShader("shaders/overlay.vs", "shaders/overlay.fs");
 
-    // Create the terrain using the heightmap
-
-    terrain = new Terrain("images/height-map.png", 10.0f, 256, 256);
-    terrain->loadTexture("images/grass.jpg"); // Load the texture for the terrain
-
-    terrain->addModel("grass", "models/grass/grass.obj");       // Load the model for the grass
-    terrain->generateObjects(1000, "grass", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
-
-    terrain->addModel("rock", "models/rock_scan/rock_scan.obj");
-    terrain->generateObjects(100, "rock", 0.0f, 10.0f, 0.5f);
-
-    // terrain->addModel("batu", "models/batu/batu.obj");
-    // terrain->generateObjects(10, "batu", 0.0f, 10.0f, 0.5f);
-
-    terrain->addModel("bush", "models/bush/shrub.obj");
-    terrain->generateObjects(1000, "bush", 0.0f, 10.0f, 0.5f);
-
-    terrain->addModel("tree", "models/pohon/lowpoly_tree.obj");
-    terrain->generateObjects(500, "tree", 0.0f, 10.0f, 0.5f); // Grass near flat terrain
-
-    // terrain->addModel("tree", "models/cemara/cemara.obj");       // Load the model for the grass
-    // terrain->generateObjects(150, "tree", 0.0f, 10.0f, 0.5f);
-
-    // load models
-    // -----------
-    player = new Model(FileSystem::getPath("models/oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
-    player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));
-
     // collectibles: Create a collectible manager and add collectibles
     CollectibleManager collectibleManager;
     GameController gameController(collectibleManager);
-    // Add collectibles at random positions
-    for (int i = 0; i < 5; ++i) {
-        float x = static_cast<float>(rand() % terrain->getWidth());
-        float z = static_cast<float>(rand() % terrain->getHeight());
-        float y = terrain->getHeightAt(x, z);
-        collectibleManager.addCollectible(glm::vec3(x, y + 0.25f, z), "models/little_star/little_star.obj");
-        std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
-    }
+
+    isRotate = 0;
+    gameWon = false;
+    gameLost = false;
+    float countdownTimer = 30; // 5 * 60.0f; // 5 minutes
+
+    // Initialize terrain
+    terrain = new Terrain("images/height-map.png", 10.0f, 256, 256);
+    // Initialize player
+    player = new Model(FileSystem::getPath("models/oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
+
+    // Initialize the game
+    gameController.initGame(terrain, player, collectibleManager, gameController, countdownTimer, gameWon, gameLost, lastFrame);
 
     std::vector<std::string> faces = {
         "images/skybox/right.jpg", "images/skybox/left.jpg", "images/skybox/top.jpg",
@@ -166,12 +142,6 @@ int main() {
 
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    isRotate = 0;
-    gameWon = false;
-    gameLost = false;
-    float countdownTimer = 30; // 5 * 60.0f; // 5 minutes
-    lastFrame = glfwGetTime();
 
     cout << "Game started!" << endl;
 
@@ -270,9 +240,11 @@ int main() {
             losePopup.render(textRenderer, overlayShader, textShader, SCR_WIDTH, SCR_HEIGHT);
         }
 
+        // Restart the game when necessary
         if ((winPopup.isVisible() || losePopup.isVisible()) && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
-            // restart game
-            // restartGame(); // Reset game state
+            gameController.restartGame(terrain, player, collectibleManager, gameController, countdownTimer, gameWon, gameLost, lastFrame);
+            winPopup.hide();
+            losePopup.hide();
         }
 
         // Swap buffers and poll events

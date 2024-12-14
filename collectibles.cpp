@@ -58,7 +58,7 @@ int CollectibleManager::getCollectedCount() const {
 }
 
 int CollectibleManager::getTotalCount() const {
-    return collectibles.size();
+    return collectibleCount;
 }
 
 void Collectible::updateLight(Shader &shader, int lightIndex) const {
@@ -71,5 +71,16 @@ void Collectible::updateLight(Shader &shader, int lightIndex) const {
         shader.setVec3(lightPos, position);                      // Light position
         shader.setVec3(lightColor, glm::vec3(1.0f, 0.8f, 0.5f)); // Light color (e.g., gold)
         shader.setFloat(lightIntensity, 1000.0f);                // Light intensity
+    }
+}
+
+void CollectibleManager::clear() {
+    collectibles.clear(); // Clear the vector of collectibles
+    std::cout << "All collectibles cleared!" << std::endl;
+}
+
+void CollectibleManager::uncollectAll() {
+    for (auto &collectible : collectibles) {
+        collectible.uncollect();
     }
 }

@@ -21,6 +21,7 @@ public:
         cout << "Collected " << type << " at " << glm::to_string(position) << endl;
         collected = true;
     }
+    void uncollect() { collected = false; }
 
 private:
     glm::vec3 position;   // Position of the collectible
@@ -34,14 +35,18 @@ private:
 class CollectibleManager {
 public:
     void addCollectible(const glm::vec3 &position, const std::string &type);
+    void uncollectAll();
     void renderAll(Shader &shader, const glm::mat4 &vp);
     void checkAllCollisions(const glm::vec3 &playerPosition, float radius);
     int getCollectedCount() const;
+    void setCollectibles(int count) { collectibleCount = count; }
     int getTotalCount() const;
+    void clear(); // Clear all collectibles
     std::vector<Collectible> &getCollectibles() { return collectibles; }
 
 private:
     std::vector<Collectible> collectibles;
+    int collectibleCount = 0;
 };
 
 #endif // COLLECTIBLES_H
