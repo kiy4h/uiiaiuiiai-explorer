@@ -2,6 +2,7 @@
 #define COLLECTIBLES_H
 
 #include "model.h"
+#include "sound_manager.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <vector>
@@ -34,6 +35,8 @@ private:
 
 class CollectibleManager {
 public:
+    CollectibleManager(SoundManager &soundManager)
+        : soundManager(soundManager) {}
     void addCollectible(const glm::vec3 &position, const std::string &type);
     void uncollectAll();
     void renderAll(Shader &shader, const glm::mat4 &vp);
@@ -47,6 +50,7 @@ public:
 private:
     std::vector<Collectible> collectibles;
     int collectibleCount = 0;
+    SoundManager &soundManager;
 };
 
 #endif // COLLECTIBLES_H

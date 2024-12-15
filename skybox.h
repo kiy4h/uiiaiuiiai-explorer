@@ -13,7 +13,7 @@ public:
     Skybox(const std::vector<std::string> &faces, Shader &skyboxShader);
     ~Skybox();
 
-    void render(const glm::mat4 &view, const glm::mat4 &projection, Camera &camera);
+    void render(const glm::mat4 &view, const glm::mat4 &projection, Camera *camera);
 
 private:
     unsigned int loadCubemap(const std::vector<std::string> &faces);

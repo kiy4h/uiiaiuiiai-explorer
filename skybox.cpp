@@ -63,7 +63,7 @@ unsigned int Skybox::loadCubemap(const std::vector<std::string> &faces) {
     return textureID;
 }
 
-void Skybox::render(const glm::mat4 &view, const glm::mat4 &projection, Camera &camera) {
+void Skybox::render(const glm::mat4 &view, const glm::mat4 &projection, Camera *camera) {
     glDepthFunc(GL_LEQUAL);
     skyboxShader.use();
 

@@ -1,54 +1,38 @@
+
+#define SDL_MAIN_HANDLED
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h>
 
-#define SDL_MAIN_HANDLED
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_mixer.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <iostream>
 
-#include "camera.h"
-#include "collectibles.h"
-#include "filesystem.h"
 #include "game_controller.h"
 #include "model.h"
 #include "popup.h"
 #include "shader.h"
 #include "skybox.h"
 #include "sound_manager.h"
-#include "text_renderer.h"
-
-#include <iostream>
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset);
-void processInput(GLFWwindow *window);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 // camera
-Camera camera(glm::vec3(0.0f, 0.0f, 3.0f));
+Camera *camera = new Camera(glm::vec3(0.0f, 5.0f, 10.0f)); // Example initial position for the camera
+Model *player;
+
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
 bool firstMouse = true;
-
-// timing
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-int isRotate;
-bool gameWon, gameLost;
-
-GLuint terrainVAO;
-Model *player;
-Terrain *terrain;
-glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f); // Adjust for desired fixed distance and height
-
+glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f);  // Adjust for desired fixed distance and height
 glm::vec3 lightPos(100.0f, 100.0f, 100.0f); // Position of light source
 glm::vec3 lightColor(1.0f, 1.0f, 1.0f);     // Light color (white light)
 
@@ -63,8 +47,8 @@ int main() {
     // Request OpenGL 3.3 context
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Terrain Example", nullptr, nullptr);
-    if (!window) {
+    GLFWwindow *window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "Game", NULL, NULL);
+    if (window == nullptr) {
         std::cerr << "Failed to create GLFW window!" << std::endl;
         glfwTerminate();
         return -1;
@@ -105,22 +89,27 @@ int main() {
     Shader collectibleShader("shaders/collectible.vs", "shaders/collectible.fs");
     Shader overlayShader("shaders/overlay.vs", "shaders/overlay.fs");
 
-    // collectibles: Create a collectible manager and add collectibles
-    CollectibleManager collectibleManager;
-    GameController gameController(collectibleManager);
+    // Initialize sound manager
+    SoundManager soundManager;
+    // Load background music
+    soundManager.loadBGM("audio/maxwell-bgm.mp3");
+    // Load sound effects
+    soundManager.loadSoundEffect("collect", "audio/oiiaioiiiai-mini.mp3");
+    soundManager.loadSoundEffect("win", "audio/yippee.mp3");
+    soundManager.loadSoundEffect("lose", "audio/sad-moment.mp3");
 
-    isRotate = 0;
-    gameWon = false;
-    gameLost = false;
-    float countdownTimer = 30; // 5 * 60.0f; // 5 minutes
-
+    Terrain *terrain;
     // Initialize terrain
     terrain = new Terrain("images/height-map.png", 10.0f, 256, 256);
     // Initialize player
     player = new Model(FileSystem::getPath("models/oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
 
+    // collectibles: Create a collectible manager and add collectibles
+    CollectibleManager collectibleManager(soundManager);
+    GameController gameController(window, camera, collectibleManager, soundManager, terrain, player);
+
     // Initialize the game
-    gameController.initGame(terrain, player, collectibleManager, gameController, countdownTimer, gameWon, gameLost, lastFrame);
+    gameController.initGame();
 
     std::vector<std::string> faces = {
         "images/skybox/right.jpg", "images/skybox/left.jpg", "images/skybox/top.jpg",
@@ -139,17 +128,6 @@ int main() {
     Popup winPopup("You Win!", glm::vec3(1.0f, 1.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
     Popup losePopup("You Lose!", glm::vec3(1.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
 
-    // Initialize sound manager
-    SoundManager soundManager;
-    // Load background music
-    soundManager.loadBGM("audio/maxwell-bgm.mp3");
-    // Load sound effects
-    // soundManager.loadSoundEffect("collect", "audio/collect.wav");
-    // soundManager.loadSoundEffect("win", "audio/win.wav");
-    // soundManager.loadSoundEffect("lose", "audio/lose.wav");
-    // Start playing background music
-    soundManager.playBGM();
-
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
@@ -162,45 +140,25 @@ int main() {
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
-        // Timing
-        float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
 
         // Input handling: Check for ESC key to exit
-        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, true);
-
-        // Update game logic
-        if (!gameWon && !gameLost) {
-            // Check for player collision with collectibles
-            float playerRadius = 0.5f; // Example radius for collision detection
-            gameController.update(player->GetPosition(), playerRadius);
-
-            // Check for game over conditions
-            gameWon = gameController.hasPlayerWon();
-            gameLost = countdownTimer <= 0.0f;
-
-            // Input handling
-            processInput(window);
-
-            // Update countdown timer
-            countdownTimer -= deltaTime;
         }
-
-        // Update camera to follow player
-        camera.updateCameraVectors(player->GetPosition(), 10.0f);
 
         // Rendering
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        glm::mat4 view = camera.GetViewMatrix();
+        // Update game state
+        gameController.update();
+
+        glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        glm::mat4 view = camera->GetViewMatrix();
         glm::mat4 vp = projection * view;
 
         // ** Render the skybox **
-        skybox.render(camera.GetViewMatrix(), projection, camera);
+        skybox.render(camera->GetViewMatrix(), projection, camera);
 
         // ** Render player **
         playerShader.use();
@@ -217,7 +175,7 @@ int main() {
         terrainShader.setMat4("view", view);
         terrainShader.setMat4("projection", projection);
         terrainShader.setVec3("lightPos", lightPos);
-        terrainShader.setVec3("viewPos", camera.Position);
+        terrainShader.setVec3("viewPos", camera->Position);
         terrainShader.setVec3("lightColor", lightColor);
         glm::mat4 terrainModel = glm::mat4(1.0f); // Identity matrix for no transformation
         terrainShader.setMat4("model", terrainModel);
@@ -227,11 +185,11 @@ int main() {
         terrain->renderObjects(playerShader, vp);
 
         // Render the scoreboard
-        std::string scoreText = "Score: " + std::to_string(gameController.getCollectedCount());
+        std::string scoreText = "Score: " + std::to_string(gameController.getCollectedCount()) + "/" + std::to_string(collectibleManager.getTotalCount());
         textRenderer.RenderText(textShader, scoreText, SCR_WIDTH - 150.0f, SCR_HEIGHT - 50.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // Top-right corner
 
         // Render timer
-
+        float countdownTimer = gameController.getCountdownTimer();
         std::string timerText = "Time: " + std::to_string(static_cast<int>(countdownTimer / 60.0f)) + "m " + std::to_string(static_cast<int>(countdownTimer) % 60) + "s";
         textRenderer.RenderText(textShader, timerText, 20.0f, SCR_HEIGHT - 50.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 
@@ -239,11 +197,15 @@ int main() {
         collectibleShader.use();
         collectibleManager.renderAll(collectibleShader, vp);
 
-        // Check for game over conditions
-        if (gameWon) {
+        // Check game state and show popups if needed
+        if (gameController.getGameState() == GameState::Won) {
             winPopup.show();
-        } else if (gameLost) {
+            soundManager.stopBGM();
+            soundManager.playSoundEffect("win");
+        } else if (gameController.getGameState() == GameState::Lost) {
             losePopup.show();
+            soundManager.stopBGM();
+            soundManager.playSoundEffect("lose");
         }
 
         // Render popups
@@ -256,7 +218,7 @@ int main() {
 
         // Restart the game when necessary
         if ((winPopup.isVisible() || losePopup.isVisible()) && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
-            gameController.restartGame(terrain, player, collectibleManager, gameController, countdownTimer, gameWon, gameLost, lastFrame);
+            gameController.restartGame();
             winPopup.hide();
             losePopup.hide();
         }
@@ -279,80 +241,77 @@ float lerp(float a, float b, float t) {
     return a + t * (b - a);
 }
 
-// process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
-void processInput(GLFWwindow *window) {
+// // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
+// // ---------------------------------------------------------------------------------------------------------
+// void processInput(GLFWwindow *window) {
 
-    glm::vec3 moveDirection(0.0f);
+//     glm::vec3 moveDirection(0.0f);
 
-    // Flatten the camera's Front and Right vectors for movement on the XZ plane
-    glm::vec3 frontXZ = glm::normalize(glm::vec3(camera.Front.x, 0.0f, camera.Front.z));
-    glm::vec3 rightXZ = glm::normalize(glm::vec3(camera.Right.x, 0.0f, camera.Right.z));
+//     // Flatten the camera's Front and Right vectors for movement on the XZ plane
+//     glm::vec3 frontXZ = glm::normalize(glm::vec3(camera->Front.x, 0.0f, camera->Front.z));
+//     glm::vec3 rightXZ = glm::normalize(glm::vec3(camera->Right.x, 0.0f, camera->Right.z));
 
-    // Add/subtract movement directions based on input
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        moveDirection += frontXZ; // Forward
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        moveDirection -= frontXZ; // Backward
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        moveDirection -= rightXZ; // Left
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        moveDirection += rightXZ; // Right
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) isRotate = isRotate ? 0 : 1;
+//     // Add/subtract movement directions based on input
+//     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+//         moveDirection += frontXZ; // Forward
+//     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+//         moveDirection -= frontXZ; // Backward
+//     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+//         moveDirection -= rightXZ; // Left
+//     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+//         moveDirection += rightXZ; // Right
+//     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) isRotate = isRotate ? 0 : 1;
 
-    // Normalize the movement direction if there's input
-    if (glm::length(moveDirection) > 0.0f) {
-        float speed = 5.0f * deltaTime;                // Adjust speed as needed
-        moveDirection = glm::normalize(moveDirection); // Ensure uniform speed
+//     // Normalize the movement direction if there's input
+//     if (glm::length(moveDirection) > 0.0f) {
+//         float speed = 5.0f * deltaTime;                // Adjust speed as needed
+//         moveDirection = glm::normalize(moveDirection); // Ensure uniform speed
 
-        glm::vec3 currentPosition = player->GetPosition();
-        glm::vec3 newPosition = currentPosition + moveDirection * speed;
+//         glm::vec3 currentPosition = player->GetPosition();
+//         glm::vec3 newPosition = currentPosition + moveDirection * speed;
 
-        // Keep the model on top of the terrain
-        float terrainHeight = terrain->getHeightAt(newPosition.x, newPosition.z);
+//         // Keep the model on top of the terrain
+//         float terrainHeight = terrain->getHeightAt(newPosition.x, newPosition.z);
 
-        // Smoothly interpolate the Y position towards the target height
-        float smoothFactor = 0.7f; // Adjust this value for more/less smoothness
-        newPosition.y = glm::mix(currentPosition.y, terrainHeight, smoothFactor);
+//         // Smoothly interpolate the Y position towards the target height
+//         float smoothFactor = 0.7f; // Adjust this value for more/less smoothness
+//         newPosition.y = glm::mix(currentPosition.y, terrainHeight, smoothFactor);
 
-        // Clamp position to stay within terrain bounds
-        newPosition.x = glm::clamp(newPosition.x, 0.0f, (float)(terrain->getWidth() - 1));
-        newPosition.z = glm::clamp(newPosition.z, 0.0f, (float)(terrain->getHeight() - 1));
-        // Set the model's new position
-        player->SetPosition(newPosition);
+//         // Clamp position to stay within terrain bounds
+//         newPosition.x = glm::clamp(newPosition.x, 0.0f, (float)(terrain->getWidth() - 1));
+//         newPosition.z = glm::clamp(newPosition.z, 0.0f, (float)(terrain->getHeight() - 1));
+//         // Set the model's new position
+//         player->SetPosition(newPosition);
 
-        // Calculate target rotation (yaw angle) based on moveDirection
-        float targetYaw = glm::degrees(glm::atan(moveDirection.z, moveDirection.x));
-        // Get the current yaw angle of the model
-        float currentYaw = player->GetRotation().y;
-        if (isRotate) {
-            // Ensure angles are in the range [0, 360)
-            targetYaw = fmod(targetYaw + 360.0f, 360.0f);
-            currentYaw = fmod(currentYaw + 360.0f, 360.0f);
+//         // Calculate target rotation (yaw angle) based on moveDirection
+//         float targetYaw = glm::degrees(glm::atan(moveDirection.z, moveDirection.x));
+//         // Get the current yaw angle of the model
+//         float currentYaw = player->GetRotation().y;
+//         if (isRotate) {
+//             // Ensure angles are in the range [0, 360)
+//             targetYaw = fmod(targetYaw + 360.0f, 360.0f);
+//             currentYaw = fmod(currentYaw + 360.0f, 360.0f);
 
-            // Determine the shortest direction to rotate
-            float rotationSpeed = 400.0f * deltaTime; // Adjust speed (degrees per second)
-            currentYaw += rotationSpeed;
+//             // Determine the shortest direction to rotate
+//             float rotationSpeed = 400.0f * deltaTime; // Adjust speed (degrees per second)
+//             currentYaw += rotationSpeed;
 
-            // Wrap currentYaw back to [0, 360) if needed
-            currentYaw = fmod(currentYaw + 360.0f, 360.0f);
+//             // Wrap currentYaw back to [0, 360) if needed
+//             currentYaw = fmod(currentYaw + 360.0f, 360.0f);
 
-            // Update model's rotation (yaw only)
-            player->SetRotation(glm::vec3(0.0f, currentYaw, 0.0f));
+//             // Update model's rotation (yaw only)
+//             player->SetRotation(glm::vec3(0.0f, currentYaw, 0.0f));
 
-        } else {
-            // Smoothly interpolate (lerp) between current and target yaw angles
-            float smoothFactor = 0.3f; // Adjust for more/less smoothness
-            float newYaw = glm::mix(currentYaw, -targetYaw + 90 + 360, smoothFactor);
+//         } else {
+//             // Smoothly interpolate (lerp) between current and target yaw angles
+//             float smoothFactor = 0.3f; // Adjust for more/less smoothness
+//             float newYaw = glm::mix(currentYaw, -targetYaw + 90 + 360, smoothFactor);
 
-            // Update model's rotation (yaw only)
-            player->SetRotation(glm::vec3(0.0f, newYaw, 0.0f));
-        }
-    }
-}
-
-void transformPlayer(glm::vec3 moveDirection) {
-}
+//             // Update model's rotation (yaw only)
+//             player->SetRotation(glm::vec3(0.0f, newYaw, 0.0f));
+//         }
+//     }
+// }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
@@ -382,11 +341,11 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
 
     float distance = 5.0f; // Set the desired distance from the model
     // Pass model position and distance to ProcessMouseMovement
-    camera.ProcessMouseMovement(xoffset, yoffset, player->GetPosition(), distance);
+    camera->ProcessMouseMovement(xoffset, yoffset, player->GetPosition(), distance);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
 // ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow *window, double xoffset, double yoffset) {
-    camera.ProcessMouseScroll(static_cast<float>(yoffset));
+    camera->ProcessMouseScroll(static_cast<float>(yoffset));
 }

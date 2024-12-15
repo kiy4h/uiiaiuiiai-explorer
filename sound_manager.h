@@ -21,6 +21,16 @@ public:
     void stopBGM();
     void playSoundEffect(const std::string &effectName);
 
+    void setBGMVolume(int volume) {
+        Mix_VolumeMusic(volume);
+    }
+
+    void setEffectVolume(int volume) {
+        for (auto &pair : soundEffects) {
+            Mix_VolumeChunk(pair.second, volume);
+        }
+    }
+
 private:
     Mix_Music *bgm;                                  // Background music
     std::map<std::string, Mix_Chunk *> soundEffects; // Map of sound effects

@@ -1,12 +1,43 @@
 #include "game_controller.h"
-// #include "filesystem.h" // Include the header file for FileSystem
-#include <GLFW/glfw3.h> // Include the GLFW header file
 
-GameController::GameController(CollectibleManager &collectibleManager)
-    : collectibleManager(collectibleManager) {}
+GameController::GameController(GLFWwindow *window, Camera *camera, CollectibleManager &collectibleManager, SoundManager &soundManager, Terrain *terrain, Model *player)
+    : window(window), camera(camera), collectibleManager(collectibleManager), soundManager(soundManager), terrain(terrain), player(player), gameState(GameState::Initializing) {
+    countdownTimer = 30.0f; // Set timer (e.g., 30 seconds)
 
-void GameController::update(const glm::vec3 &playerPosition, float playerRadius) {
-    collectibleManager.checkAllCollisions(playerPosition, playerRadius);
+    // Optionally set up initial game states or behaviors
+    std::cout << "GameController initialized!" << std::endl;
+}
+
+void GameController::update() {
+    // Timing
+    float currentFrame = glfwGetTime();
+    deltaTime = currentFrame - lastFrame;
+    lastFrame = currentFrame;
+
+    // Update game logic
+    if (gameState == GameState::Playing) {
+        // Update camera to follow player
+        camera->updateCameraVectors(player->GetPosition(), 10.0f); // Adjust distance as needed
+
+        // Input handling
+        processInput(window, deltaTime);
+
+        // Update countdown timer
+        countdownTimer -= deltaTime;
+        // Check for player collision with collectibles
+        float playerRadius = 0.5f; // Example radius for collision detection
+        collectibleManager.checkAllCollisions(player->GetPosition(), playerRadius);
+
+        // Check if all collectibles are collected
+        if (collectibleManager.getCollectedCount() == collectibleManager.getTotalCount()) {
+            setGameWon(); // Set the game state to "Won"
+            return;
+        }
+        // Check if the timer runs out
+        if (countdownTimer <= 0.0f) {
+            setGameLost(); // Set the game state to "Lost"
+        }
+    }
 }
 
 bool GameController::hasPlayerWon() const {
@@ -17,17 +48,82 @@ int GameController::getCollectedCount() const {
     return collectibleManager.getCollectedCount();
 }
 
-void GameController::initGame(
-    Terrain *&terrain, Model *&player,
-    CollectibleManager &collectibleManager, GameController &gameController,
-    float &countdownTimer, bool &gameWon, bool &gameLost, float &lastFrame) {
-    // Reset game states
-    gameWon = false;
-    gameLost = false;
+void GameController::processInput(GLFWwindow *window, float deltaTime) {
+    glm::vec3 moveDirection(0.0f);
+
+    // Flatten the camera's Front and Right vectors for movement on the XZ plane
+    glm::vec3 frontXZ = glm::normalize(glm::vec3(camera->Front.x, 0.0f, camera->Front.z));
+    glm::vec3 rightXZ = glm::normalize(glm::vec3(camera->Right.x, 0.0f, camera->Right.z));
+
+    // Add/subtract movement directions based on input
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        moveDirection += frontXZ; // Forward
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        moveDirection -= frontXZ; // Backward
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        moveDirection -= rightXZ; // Left
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        moveDirection += rightXZ; // Right
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) isRotate = isRotate ? 0 : 1;
+
+    // Normalize the movement direction if there's input
+    if (glm::length(moveDirection) > 0.0f) {
+        float speed = 5.0f * deltaTime;                // Adjust speed as needed
+        moveDirection = glm::normalize(moveDirection); // Ensure uniform speed
+
+        glm::vec3 currentPosition = player->GetPosition();
+        glm::vec3 newPosition = currentPosition + moveDirection * speed;
+
+        // Keep the model on top of the terrain
+        float terrainHeight = terrain->getHeightAt(newPosition.x, newPosition.z);
+
+        // Smoothly interpolate the Y position towards the target height
+        float smoothFactor = 0.7f; // Adjust this value for more/less smoothness
+        newPosition.y = glm::mix(currentPosition.y, terrainHeight, smoothFactor);
+
+        // Clamp position to stay within terrain bounds
+        newPosition.x = glm::clamp(newPosition.x, 0.0f, (float)(terrain->getWidth() - 1));
+        newPosition.z = glm::clamp(newPosition.z, 0.0f, (float)(terrain->getHeight() - 1));
+        // Set the model's new position
+        player->SetPosition(newPosition);
+
+        // Calculate target rotation (yaw angle) based on moveDirection
+        float targetYaw = glm::degrees(glm::atan(moveDirection.z, moveDirection.x));
+        // Get the current yaw angle of the model
+        float currentYaw = player->GetRotation().y;
+        if (isRotate) {
+            // Ensure angles are in the range [0, 360)
+            targetYaw = fmod(targetYaw + 360.0f, 360.0f);
+            currentYaw = fmod(currentYaw + 360.0f, 360.0f);
+
+            // Determine the shortest direction to rotate
+            float rotationSpeed = 400.0f * deltaTime; // Adjust speed (degrees per second)
+            currentYaw += rotationSpeed;
+
+            // Wrap currentYaw back to [0, 360) if needed
+            currentYaw = fmod(currentYaw + 360.0f, 360.0f);
+
+            // Update model's rotation (yaw only)
+            player->SetRotation(glm::vec3(0.0f, currentYaw, 0.0f));
+
+        } else {
+            // Smoothly interpolate (lerp) between current and target yaw angles
+            float smoothFactor = 0.3f; // Adjust for more/less smoothness
+            float newYaw = glm::mix(currentYaw, -targetYaw + 90 + 360, smoothFactor);
+
+            // Update model's rotation (yaw only)
+            player->SetRotation(glm::vec3(0.0f, newYaw, 0.0f));
+        }
+    }
+}
+
+void GameController::initGame() {
+    // Reset game state
+    gameState = GameState::Initializing;
     countdownTimer = 30.0f; // Set timer (e.g., 30 seconds)
 
-    collectibleManager.clear();            // Clear all collectibles
-    collectibleManager.setCollectibles(5); // Set the number of collectibles
+    // collectibleManager.clear();            // Clear all collectibles
+    collectibleManager.setCollectibles(1); // Set the number of collectibles
 
     terrain->loadTexture("images/grass.jpg");
     terrain->addModel("grass", "models/grass/grass.obj");
@@ -41,27 +137,30 @@ void GameController::initGame(
 
     player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));
 
+    float x = 256 / 2, z = 256 / 2 + 1;
+    float y = terrain->getHeightAt(x, z);
+    collectibleManager.addCollectible(glm::vec3(x, y, z), "models/little_star/little_star.obj");
     // Initialize collectibles
     for (int i = 0; i < 5; ++i) {
-        float x = static_cast<float>(rand() % terrain->getWidth());
-        float z = static_cast<float>(rand() % terrain->getHeight());
-        float y = terrain->getHeightAt(x, z);
-        collectibleManager.addCollectible(glm::vec3(x, y + 0.25f, z), "models/little_star/little_star.obj");
+        x = static_cast<float>(rand() % terrain->getWidth());
+        z = static_cast<float>(rand() % terrain->getHeight());
+        y = terrain->getHeightAt(x, z);
+        collectibleManager.addCollectible(glm::vec3(x, y, z), "models/little_star/little_star.obj");
         std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
     }
 
     lastFrame = glfwGetTime(); // Reset timing
+    soundManager.playBGM();
+    gameState = GameState::Playing; // Set game state to Playing
     std::cout << "Game initialized!" << std::endl;
 }
 
-void GameController::restartGame(
-    Terrain *&terrain, Model *&player,
-    CollectibleManager &collectibleManager, GameController &gameController,
-    float &countdownTimer, bool &gameWon, bool &gameLost, float &lastFrame) {
+void GameController::restartGame() {
     // restart game; do not regenerate terrain.
-    gameWon = false;
-    gameLost = false;
-    countdownTimer = 30.0f; // Set timer (e.g., 30 seconds)
+    gameState = GameState::Initializing; // Reset game state
+    countdownTimer = 30.0f;              // Set timer (e.g., 30 seconds)
+
+    collectibleManager.setCollectibles(1); // Set the number of collectibles
 
     // Reset player position
     player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));
@@ -70,5 +169,7 @@ void GameController::restartGame(
     collectibleManager.uncollectAll();
 
     lastFrame = glfwGetTime(); // Reset timing
+    soundManager.playBGM();
+    gameState = GameState::Playing; // Set game state to Playing
     cout << "Game restarted!" << endl;
 }
