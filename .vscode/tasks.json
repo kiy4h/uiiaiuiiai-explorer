@@ -14,16 +14,19 @@
                 "stb_image.cpp",
                 "collectibles.cpp",
                 "game_controller.cpp",
+                "sound_manager.cpp",
                 "-o",
                 "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "-lSDL2_mixer",
+                "-lSDL2",
                 "-lglfw3",
                 "-lfreetype",
-                // "-lglew32",
                 "-lopengl32",
                 "-lgdi32",
                 "-lassimp",
                 "-DGLM_ENABLE_EXPERIMENTAL",
-                "-I\"C:/msys64/ucrt64/include/freetype2\""
+                "-I\"C:/msys64/ucrt64/include/freetype2\"",
+                // "-mconsole",
             ],
             "options": {
                 "cwd": "${fileDirname}"

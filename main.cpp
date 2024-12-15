@@ -2,6 +2,9 @@
 
 #include <GLFW/glfw3.h>
 
+#define SDL_MAIN_HANDLED
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
@@ -15,6 +18,7 @@
 #include "popup.h"
 #include "shader.h"
 #include "skybox.h"
+#include "sound_manager.h"
 #include "text_renderer.h"
 
 #include <iostream>
@@ -134,6 +138,17 @@ int main() {
     // Create popups
     Popup winPopup("You Win!", glm::vec3(1.0f, 1.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
     Popup losePopup("You Lose!", glm::vec3(1.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
+
+    // Initialize sound manager
+    SoundManager soundManager;
+    // Load background music
+    soundManager.loadBGM("audio/maxwell-bgm.mp3");
+    // Load sound effects
+    // soundManager.loadSoundEffect("collect", "audio/collect.wav");
+    // soundManager.loadSoundEffect("win", "audio/win.wav");
+    // soundManager.loadSoundEffect("lose", "audio/lose.wav");
+    // Start playing background music
+    soundManager.playBGM();
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
