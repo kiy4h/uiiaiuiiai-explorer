@@ -112,7 +112,6 @@ public:
             Pitch = -89.0f;
     }
 
-    // �����������������
     void ProcessMouseScroll(float yoffset) {
         if (Zoom >= 1.0f && Zoom <= ZOOM)
             Zoom -= yoffset;

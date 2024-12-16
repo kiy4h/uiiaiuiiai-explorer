@@ -13,7 +13,8 @@ enum class GameState {
     Initializing, // Game setup
     Playing,      // Game in progress
     Won,          // Player has won
-    Lost          // Player has lost
+    Lost,         // Player has lost
+    AudioPlayed
 };
 
 class GameController {
@@ -26,6 +27,7 @@ public:
     GameState getGameState() const { return gameState; }
 
     void update();
+    void setGameState(GameState state) { gameState = state; }
     void setGameWon() { gameState = GameState::Won; }
     void setGameLost() { gameState = GameState::Lost; }
 

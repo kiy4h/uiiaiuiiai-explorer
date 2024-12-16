@@ -202,10 +202,12 @@ int main() {
             winPopup.show();
             soundManager.stopBGM();
             soundManager.playSoundEffect("win");
+            gameController.setGameState(GameState::AudioPlayed);
         } else if (gameController.getGameState() == GameState::Lost) {
             losePopup.show();
             soundManager.stopBGM();
             soundManager.playSoundEffect("lose");
+            gameController.setGameState(GameState::AudioPlayed);
         }
 
         // Render popups
@@ -241,78 +243,6 @@ float lerp(float a, float b, float t) {
     return a + t * (b - a);
 }
 
-// // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// // ---------------------------------------------------------------------------------------------------------
-// void processInput(GLFWwindow *window) {
-
-//     glm::vec3 moveDirection(0.0f);
-
-//     // Flatten the camera's Front and Right vectors for movement on the XZ plane
-//     glm::vec3 frontXZ = glm::normalize(glm::vec3(camera->Front.x, 0.0f, camera->Front.z));
-//     glm::vec3 rightXZ = glm::normalize(glm::vec3(camera->Right.x, 0.0f, camera->Right.z));
-
-//     // Add/subtract movement directions based on input
-//     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-//         moveDirection += frontXZ; // Forward
-//     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-//         moveDirection -= frontXZ; // Backward
-//     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-//         moveDirection -= rightXZ; // Left
-//     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-//         moveDirection += rightXZ; // Right
-//     if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) isRotate = isRotate ? 0 : 1;
-
-//     // Normalize the movement direction if there's input
-//     if (glm::length(moveDirection) > 0.0f) {
-//         float speed = 5.0f * deltaTime;                // Adjust speed as needed
-//         moveDirection = glm::normalize(moveDirection); // Ensure uniform speed
-
-//         glm::vec3 currentPosition = player->GetPosition();
-//         glm::vec3 newPosition = currentPosition + moveDirection * speed;
-
-//         // Keep the model on top of the terrain
-//         float terrainHeight = terrain->getHeightAt(newPosition.x, newPosition.z);
-
-//         // Smoothly interpolate the Y position towards the target height
-//         float smoothFactor = 0.7f; // Adjust this value for more/less smoothness
-//         newPosition.y = glm::mix(currentPosition.y, terrainHeight, smoothFactor);
-
-//         // Clamp position to stay within terrain bounds
-//         newPosition.x = glm::clamp(newPosition.x, 0.0f, (float)(terrain->getWidth() - 1));
-//         newPosition.z = glm::clamp(newPosition.z, 0.0f, (float)(terrain->getHeight() - 1));
-//         // Set the model's new position
-//         player->SetPosition(newPosition);
-
-//         // Calculate target rotation (yaw angle) based on moveDirection
-//         float targetYaw = glm::degrees(glm::atan(moveDirection.z, moveDirection.x));
-//         // Get the current yaw angle of the model
-//         float currentYaw = player->GetRotation().y;
-//         if (isRotate) {
-//             // Ensure angles are in the range [0, 360)
-//             targetYaw = fmod(targetYaw + 360.0f, 360.0f);
-//             currentYaw = fmod(currentYaw + 360.0f, 360.0f);
-
-//             // Determine the shortest direction to rotate
-//             float rotationSpeed = 400.0f * deltaTime; // Adjust speed (degrees per second)
-//             currentYaw += rotationSpeed;
-
-//             // Wrap currentYaw back to [0, 360) if needed
-//             currentYaw = fmod(currentYaw + 360.0f, 360.0f);
-
-//             // Update model's rotation (yaw only)
-//             player->SetRotation(glm::vec3(0.0f, currentYaw, 0.0f));
-
-//         } else {
-//             // Smoothly interpolate (lerp) between current and target yaw angles
-//             float smoothFactor = 0.3f; // Adjust for more/less smoothness
-//             float newYaw = glm::mix(currentYaw, -targetYaw + 90 + 360, smoothFactor);
-
-//             // Update model's rotation (yaw only)
-//             player->SetRotation(glm::vec3(0.0f, newYaw, 0.0f));
-//         }
-//     }
-// }
-
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow *window, int width, int height) {
@@ -339,7 +269,7 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
     lastX = xpos;
     lastY = ypos;
 
-    float distance = 5.0f; // Set the desired distance from the model
+    float distance = 1.0f; // Set the desired distance from the model
     // Pass model position and distance to ProcessMouseMovement
     camera->ProcessMouseMovement(xoffset, yoffset, player->GetPosition(), distance);
 }
