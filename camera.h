@@ -5,6 +5,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include "terrain.h"
 #include <iostream>
 #include <vector>
 
@@ -98,7 +99,7 @@ public:
             Position -= WorldUp * velocity;
     }
 
-    void ProcessMouseMovement(float xoffset, float yoffset, glm::vec3 modelPosition, float distance) {
+    void ProcessMouseMovement(float xoffset, float yoffset) {
         xoffset *= MouseSensitivity;
         yoffset *= MouseSensitivity;
 
@@ -143,30 +144,40 @@ public:
         if (Zoom > ZOOM)
             Zoom -= ZOOM_SPEED / 2;
     }
-
-    void updateCameraVectors(glm::vec3 modelPosition, float distance) {
+    void updateCameraVectors(glm::vec3 modelPosition, float distance, Terrain *terrain, float dynamicYOffset, bool applyYOffset) {
         // Calculate the offset using spherical coordinates
         glm::vec3 offset;
         offset.x = distance * cos(glm::radians(Pitch)) * sin(glm::radians(Yaw));
         offset.y = distance * sin(glm::radians(Pitch));
         offset.z = distance * cos(glm::radians(Pitch)) * cos(glm::radians(Yaw));
 
-        // Update the camera's position relative to the model
-        Position = modelPosition + offset;
+        // Calculate the desired camera position
+        glm::vec3 desiredPosition = modelPosition + offset;
 
-        // Ensure the camera points at the model
-        Front = glm::normalize(modelPosition - Position); // Look at the model
+        // Ensure the camera doesn't go below the terrain
+        float terrainHeight = terrain->getHeightAt(desiredPosition.x, desiredPosition.z);
+        desiredPosition.y = glm::max(desiredPosition.y, terrainHeight + 2.0f); // Ensure camera stays above terrain
+
+        // Update the camera position
+        Position = desiredPosition;
+
+        // Calculate the target position
+        glm::vec3 targetPosition = modelPosition;
+
+        // Apply the dynamic yOffset only if specified
+        if (applyYOffset) {
+            float maxTargetHeight = terrainHeight + dynamicYOffset;
+            targetPosition.y = glm::max(targetPosition.y, maxTargetHeight);
+        }
+
+        // Ensure the camera points at the target
+        Front = glm::normalize(targetPosition - Position);
 
         // Calculate the Right vector (perpendicular to Front and WorldUp)
         Right = glm::normalize(glm::cross(Front, WorldUp));
 
         // Recalculate the Up vector (perpendicular to Right and Front)
         Up = glm::normalize(glm::cross(Right, Front));
-
-        // Debug output to verify the vectors (optional)
-        // std::cout << "Camera Front: " << Front.x << ", " << Front.y << ", " << Front.z << std::endl;
-        // std::cout << "Camera Right: " << Right.x << ", " << Right.y << ", " << Right.z << std::endl;
-        // std::cout << "Camera Up: " << Up.x << ", " << Up.y << ", " << Up.z << std::endl;
     }
 
 private:

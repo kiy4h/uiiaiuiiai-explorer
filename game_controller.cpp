@@ -16,9 +16,6 @@ void GameController::update() {
 
     // Update game logic
     if (gameState == GameState::Playing) {
-        // Update camera to follow player
-        camera->updateCameraVectors(player->GetPosition(), 10.0f); // Adjust distance as needed
-
         // Input handling
         processInput(window, deltaTime);
 
@@ -137,17 +134,17 @@ void GameController::initGame() {
 
     player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));
 
+    // Initialize collectibles
     float x = 256 / 2, z = 256 / 2 + 1;
     float y = terrain->getHeightAt(x, z);
     collectibleManager.addCollectible(glm::vec3(x, y, z), "models/little_star/little_star.obj");
-    // Initialize collectibles
-    for (int i = 0; i < 5; ++i) {
-        x = static_cast<float>(rand() % terrain->getWidth());
-        z = static_cast<float>(rand() % terrain->getHeight());
-        y = terrain->getHeightAt(x, z);
-        collectibleManager.addCollectible(glm::vec3(x, y, z), "models/little_star/little_star.obj");
-        std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
-    }
+    // for (int i = 0; i < 5; ++i) {
+    //     x = static_cast<float>(rand() % terrain->getWidth());
+    //     z = static_cast<float>(rand() % terrain->getHeight());
+    //     y = terrain->getHeightAt(x, z);
+    //     collectibleManager.addCollectible(glm::vec3(x, y, z), "models/little_star/little_star.obj");
+    //     std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
+    // }
 
     lastFrame = glfwGetTime(); // Reset timing
     soundManager.playBGM();

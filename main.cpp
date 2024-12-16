@@ -27,11 +27,16 @@ const unsigned int SCR_HEIGHT = 600;
 
 // camera
 Camera *camera = new Camera(glm::vec3(0.0f, 5.0f, 10.0f)); // Example initial position for the camera
+float cameraDistance = 10.0f;                              // Set the desired distance from the model
+float yOffset = 0.0f;                                      // Vertical offset to keep the camera pointing above the player
+float camxoffset = 0, camyoffset = 0;
+bool firstMouse = true;
+
 Model *player;
+Terrain *terrain;
 
 float lastX = SCR_WIDTH / 2.0f;
 float lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
 glm::vec3 cameraOffset(0.0f, 3.0f, 10.0f);  // Adjust for desired fixed distance and height
 glm::vec3 lightPos(100.0f, 100.0f, 100.0f); // Position of light source
 glm::vec3 lightColor(1.0f, 1.0f, 1.0f);     // Light color (white light)
@@ -98,7 +103,6 @@ int main() {
     soundManager.loadSoundEffect("win", "audio/yippee.mp3");
     soundManager.loadSoundEffect("lose", "audio/sad-moment.mp3");
 
-    Terrain *terrain;
     // Initialize terrain
     terrain = new Terrain("images/height-map.png", 10.0f, 256, 256);
     // Initialize player
@@ -140,18 +144,48 @@ int main() {
 
     // render loop
     while (!glfwWindowShouldClose(window)) {
-
         // Input handling: Check for ESC key to exit
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, true);
         }
 
+        // Check game state and show popups if needed
+        if (gameController.getGameState() == GameState::Won) {
+            winPopup.show();
+            soundManager.stopBGM();
+            soundManager.playSoundEffect("win");
+            gameController.setGameState(GameState::AudioPlayed);
+        } else if (gameController.getGameState() == GameState::Lost) {
+            losePopup.show();
+            soundManager.stopBGM();
+            soundManager.playSoundEffect("lose");
+            gameController.setGameState(GameState::AudioPlayed);
+        }
+
+        // Restart the game when necessary
+        if ((winPopup.isVisible() || losePopup.isVisible()) && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
+            gameController.restartGame();
+            winPopup.hide();
+            losePopup.hide();
+        }
+
+        // Update game state
+        gameController.update();
+
         // Rendering
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // Update game state
-        gameController.update();
+        // Calculate dynamic yOffset based on the mouse's vertical movement
+        float dynamicYOffset = glm::clamp(glm::abs(camyoffset) * 0.05f, 0.0f, 5.0f); // Scale dynamically, max offset = 5.0f
+
+        // Check if the camera "collides" with the terrain
+        glm::vec3 camPosition = camera->Position;
+        float terrainHeight = terrain->getHeightAt(camPosition.x, camPosition.z);
+        bool applyYOffset = camPosition.y <= terrainHeight; // Apply offset only if the camera is close to the terrain
+        // Update the camera vectors
+        float distance = 10.0f; // Desired distance from the player
+        camera->updateCameraVectors(player->GetPosition(), distance, terrain, dynamicYOffset, applyYOffset);
 
         glm::mat4 projection = glm::perspective(glm::radians(camera->Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
         glm::mat4 view = camera->GetViewMatrix();
@@ -170,6 +204,10 @@ int main() {
         playerShader.setMat4("model", model);
         player->Draw(playerShader);
 
+        // Render collectibles
+        collectibleShader.use();
+        collectibleManager.renderAll(collectibleShader, vp);
+
         // ** Render terrain **
         terrainShader.use();
         terrainShader.setMat4("view", view);
@@ -183,7 +221,6 @@ int main() {
 
         // ** Render objects **
         terrain->renderObjects(playerShader, vp);
-
         // Render the scoreboard
         std::string scoreText = "Score: " + std::to_string(gameController.getCollectedCount()) + "/" + std::to_string(collectibleManager.getTotalCount());
         textRenderer.RenderText(textShader, scoreText, SCR_WIDTH - 150.0f, SCR_HEIGHT - 50.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // Top-right corner
@@ -193,36 +230,12 @@ int main() {
         std::string timerText = "Time: " + std::to_string(static_cast<int>(countdownTimer / 60.0f)) + "m " + std::to_string(static_cast<int>(countdownTimer) % 60) + "s";
         textRenderer.RenderText(textShader, timerText, 20.0f, SCR_HEIGHT - 50.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f));
 
-        // Render collectibles
-        collectibleShader.use();
-        collectibleManager.renderAll(collectibleShader, vp);
-
-        // Check game state and show popups if needed
-        if (gameController.getGameState() == GameState::Won) {
-            winPopup.show();
-            soundManager.stopBGM();
-            soundManager.playSoundEffect("win");
-            gameController.setGameState(GameState::AudioPlayed);
-        } else if (gameController.getGameState() == GameState::Lost) {
-            losePopup.show();
-            soundManager.stopBGM();
-            soundManager.playSoundEffect("lose");
-            gameController.setGameState(GameState::AudioPlayed);
-        }
-
         // Render popups
         if (winPopup.isVisible()) {
             winPopup.render(textRenderer, overlayShader, textShader, SCR_WIDTH, SCR_HEIGHT);
         }
         if (losePopup.isVisible()) {
             losePopup.render(textRenderer, overlayShader, textShader, SCR_WIDTH, SCR_HEIGHT);
-        }
-
-        // Restart the game when necessary
-        if ((winPopup.isVisible() || losePopup.isVisible()) && glfwGetKey(window, GLFW_KEY_ENTER) == GLFW_PRESS) {
-            gameController.restartGame();
-            winPopup.hide();
-            losePopup.hide();
         }
 
         // Swap buffers and poll events
@@ -263,15 +276,21 @@ void mouse_callback(GLFWwindow *window, double xposIn, double yposIn) {
         firstMouse = false;
     }
 
-    float xoffset = xpos - lastX;
-    float yoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
+    // Calculate mouse offsets
+    camxoffset = xpos - lastX;
+    camyoffset = lastY - ypos; // reversed since y-coordinates go from bottom to top
 
+    // Clamp mouse offsets to a maximum range for smoother movement
+    float maxOffset = 50.0f; // Adjust as needed
+    camxoffset = glm::clamp(camxoffset, -maxOffset, maxOffset);
+    camyoffset = glm::clamp(camyoffset, -maxOffset, maxOffset);
+
+    // Update last known mouse positions
     lastX = xpos;
     lastY = ypos;
 
-    float distance = 1.0f; // Set the desired distance from the model
-    // Pass model position and distance to ProcessMouseMovement
-    camera->ProcessMouseMovement(xoffset, yoffset, player->GetPosition(), distance);
+    // Adjust the camera's pitch and yaw based on mouse movement
+    camera->ProcessMouseMovement(camxoffset, camyoffset);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
