@@ -71,6 +71,7 @@ private:
     glm::vec3 moveDirection = glm::vec3(0.0f);
     glm::vec3 lastMoveDirection = glm::vec3(0.0f); // Default to no movement
 
+    bool isMoving = false;
     float boostTimer = 0.0f;          // Remaining boost time
     const float boostDuration = 6.0f; // Duration of the boost
 };

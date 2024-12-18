@@ -5,20 +5,23 @@
 #include <SDL2/SDL_mixer.h>
 #include <map>
 #include <string>
+#include <unordered_map>
 
 class SoundManager {
 public:
-    // Constructor and Destructor
     SoundManager();
     ~SoundManager();
 
-    // Load audio files
-    bool loadBGM(const std::string &bgmPath);
-    bool loadSoundEffect(const std::string &effectName, const std::string &effectPath);
+    bool loadBGM(const std::string &filePath, const std::string &bgmName); // Load BGM with a name
+    bool changeBGM(const std::string &bgmName);                            // Change BGM by name
 
-    // Control audio
     void playBGM();
     void stopBGM();
+    void stopAllSoundEffects();
+    void playFootsteps();
+    void stopFootsteps();
+
+    bool loadSoundEffect(const std::string &effectName, const std::string &effectPath);
     void playSoundEffect(const std::string &effectName);
 
     void setBGMVolume(int volume) {
@@ -32,8 +35,11 @@ public:
     }
 
 private:
-    Mix_Music *bgm;                                  // Background music
-    std::map<std::string, Mix_Chunk *> soundEffects; // Map of sound effects
+    Mix_Music *currentBGM;                             // Pointer to the currently playing BGM
+    std::unordered_map<std::string, Mix_Music *> bgms; // Map of BGMs
+    std::unordered_map<std::string, Mix_Chunk *> soundEffects;
+
+    int footstepChannel = -1; // Store the channel used for footsteps
 };
 
-#endif
+#endif // SOUND_MANAGER_H

@@ -64,13 +64,18 @@ void GameController::processInput(GLFWwindow *window, float deltaTime) {
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         moveDirection += rightXZ; // Right
 
-    // If there's input, update lastMoveDirection
-    if (glm::length(moveDirection) > 0.0f) {
+    isMoving = glm::length(moveDirection) > 0.0f;
+
+    // If there's input, update lastMoveDirection and play footstep sound
+    if (isMoving) {
         lastMoveDirection = glm::normalize(moveDirection); // Normalize to ensure uniform speed
+        if (!isRotate) soundManager.playFootsteps();       // Play footstep sound
+    } else {
+        if (!isRotate) soundManager.stopFootsteps(); // Stop footstep sound
     }
 
     // Use lastMoveDirection only if boost is active (isRotate == true)
-    glm::vec3 curMoveDirection = (glm::length(moveDirection) > 0.0f) ? moveDirection : (isRotate ? lastMoveDirection : glm::vec3(0.0f));
+    glm::vec3 curMoveDirection = (isMoving) ? moveDirection : (isRotate ? lastMoveDirection : glm::vec3(0.0f));
 
     // Prevent NaN values by ensuring curMoveDirection is valid
     if (glm::length(curMoveDirection) > 0.0f || isRotate) {
@@ -125,13 +130,14 @@ void GameController::initGame() {
 
     terrain->loadTexture("images/grass.jpg");
     terrain->addModel("grass", "models/grass/grass.obj");
-    terrain->generateObjects(1000, "grass", 0.0f, 10.0f, 0.5f);
     terrain->addModel("rock", "models/rock_scan/rock_scan.obj");
-    terrain->generateObjects(100, "rock", 0.0f, 10.0f, 0.5f);
     terrain->addModel("bush", "models/bush/shrub.obj");
-    terrain->generateObjects(1000, "bush", 0.0f, 10.0f, 0.5f);
     terrain->addModel("tree", "models/pohon/lowpoly_tree.obj");
-    terrain->generateObjects(500, "tree", 0.0f, 10.0f, 0.5f);
+    terrain->generateObjects(1000, "grass", 0.0f, 10.0f, 0.5f);
+    terrain->generateObjects(100, "rock", 10.0f, 20.0f, 1.0f);
+    terrain->generateObjects(1000, "bush", 5.0f, 10.0f, 0.5f);
+    terrain->generateObjects(500, "tree", 5.0f, 15.0f, 2.0f);
+    cout << "Terrain objects initialized!" << endl;
 
     player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));
 
@@ -148,8 +154,10 @@ void GameController::initGame() {
     //     collectibleManager.addCollectible(glm::vec3(x, y, z), "models/little_star/little_star.obj");
     //     std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
     // }
+    cout << "Collectibles initialized!" << endl;
 
     lastFrame = glfwGetTime(); // Reset timing
+    soundManager.changeBGM("game");
     soundManager.playBGM();
     gameState = GameState::Playing; // Set game state to Playing
     std::cout << "Game initialized!" << std::endl;
@@ -170,7 +178,7 @@ void GameController::restartGame() {
     collectibleManager.uncollectAll();
 
     lastFrame = glfwGetTime(); // Reset timing
-    soundManager.playBGM();
+    soundManager.changeBGM("game");
     gameState = GameState::Playing; // Set game state to Playing
     cout << "Game restarted!" << endl;
 }

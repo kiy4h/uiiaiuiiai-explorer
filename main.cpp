@@ -93,16 +93,18 @@ int main() {
     Shader terrainShader("shaders/terrain_test.vs", "shaders/terrain_test.fs");
     Shader collectibleShader("shaders/collectible.vs", "shaders/collectible.fs");
     Shader overlayShader("shaders/overlay.vs", "shaders/overlay.fs");
+    cout << "Shaders compiled!" << endl;
 
     // Initialize sound manager
     SoundManager soundManager;
     // Load background music
-    soundManager.loadBGM("audio/maxwell-bgm.mp3");
+    soundManager.loadBGM("audio/maxwell-bgm.mp3", "game");
+    soundManager.loadBGM("audio/yippee.mp3", "win");
+    soundManager.loadBGM("audio/sad-moment.mp3", "lose");
     // Load sound effects
     soundManager.loadSoundEffect("collect", "audio/oiiiiiai beat drop.mp3");
-    soundManager.loadSoundEffect("move", "audio/oiiaioiiiai-mini.mp3");
-    soundManager.loadSoundEffect("win", "audio/yippee.mp3");
-    soundManager.loadSoundEffect("lose", "audio/sad-moment.mp3");
+    soundManager.loadSoundEffect("footstep", "audio/oiiaioiiiai-mini.mp3");
+    cout << "Sound manager initialized!" << endl;
 
     // Initialize terrain
     terrain = new Terrain("images/height-map.png", 10.0f, 256, 256);
@@ -121,6 +123,7 @@ int main() {
         "images/skybox/bottom.jpg", "images/skybox/front.jpg", "images/skybox/back.jpg"};
     Shader skyboxShader("shaders/skybox.vs", "shaders/skybox.fs");
     Skybox skybox(faces, skyboxShader);
+    cout << "Skybox initialized!" << endl;
 
     // Load font
     TextRenderer textRenderer("FredokaOne-Regular.ttf", 28);
@@ -128,10 +131,12 @@ int main() {
     glm::mat4 projection = glm::ortho(0.0f, (float)SCR_WIDTH, 0.0f, (float)SCR_HEIGHT);
     textShader.use();
     textShader.setMat4("projection", projection);
+    cout << "Text renderer initialized!" << endl;
 
     // Create popups
     Popup winPopup("You Win!", glm::vec3(1.0f, 1.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
     Popup losePopup("You Lose!", glm::vec3(1.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
+    cout << "Popups initialized!" << endl;
 
     // draw in wireframe
     // glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -153,13 +158,13 @@ int main() {
         // Check game state and show popups if needed
         if (gameController.getGameState() == GameState::Won) {
             winPopup.show();
-            soundManager.stopBGM();
-            soundManager.playSoundEffect("win");
+            soundManager.stopAllSoundEffects();
+            soundManager.changeBGM("win");
             gameController.setGameState(GameState::AudioPlayed);
         } else if (gameController.getGameState() == GameState::Lost) {
             losePopup.show();
-            soundManager.stopBGM();
-            soundManager.playSoundEffect("lose");
+            soundManager.stopAllSoundEffects();
+            soundManager.changeBGM("lose");
             gameController.setGameState(GameState::AudioPlayed);
         }
 

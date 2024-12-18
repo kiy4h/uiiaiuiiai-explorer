@@ -270,9 +270,9 @@ void Terrain::renderObjects(Shader &objectShader, const glm::mat4 &vp) {
         } else if (object.type == "rock") {
             model = glm::scale(model, glm::vec3(0.5f));
         } else if (object.type == "grass") {
-            model = glm::scale(model, glm::vec3(0.2f));
+            model = glm::scale(model, glm::vec3(0.5f));
         } else if (object.type == "bush") {
-            model = glm::scale(model, glm::vec3(0.3f));
+            model = glm::scale(model, glm::vec3(0.5f));
         }
 
         objectShader.setMat4("model", model);
