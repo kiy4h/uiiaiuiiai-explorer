@@ -19,7 +19,7 @@ public:
     glm::vec3 getLightColor() const { return lightColor; }
     bool isCollected() const { return collected; }
     void collect() {
-        cout << "Collected " << type << " at " << glm::to_string(position) << endl;
+        // cout << "Collected " << type << " at " << glm::to_string(position) << endl;
         collected = true;
     }
     void uncollect() { collected = false; }

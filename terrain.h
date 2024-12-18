@@ -26,7 +26,9 @@ public:
     glm::vec3 getMaxCorner() const { return maxCorner; }
 
     void addModel(const std::string &type, const std::string &modelPath); // Load models
-    void generateObjects(int count, const std::string &type, float minHeight, float maxHeight, float spread);
+    void generateObjects(int count, const std::string &type,
+                         float minHeight, float maxHeight, float spread,
+                         float minScale, float maxScale);
     void renderObjects(Shader &objectShader, const glm::mat4 &vp);
 
 private:
@@ -56,6 +58,8 @@ private:
         glm::vec3 position;
         int modelIndex; // Index into the model list for the type
         std::string type;
+        float rotationY; // Y-axis rotation
+        float scale;     // Scaling factor
     };
     std::vector<ObjectInstance> objects;                        // Store all placed objects
     std::unordered_map<std::string, std::vector<Model>> models; // Store models for each type

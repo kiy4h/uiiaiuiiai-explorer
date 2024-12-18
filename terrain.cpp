@@ -238,7 +238,8 @@ void Terrain::addModel(const std::string &type, const std::string &modelPath) {
 }
 
 void Terrain::generateObjects(int count, const std::string &type,
-                              float minHeight, float maxHeight, float spread) {
+                              float minHeight, float maxHeight, float spread,
+                              float minScale, float maxScale) {
     for (int i = 0; i < count; ++i) {
         // Generate random position on the terrain
         float x = static_cast<float>(rand() % terrainWidth);
@@ -247,14 +248,18 @@ void Terrain::generateObjects(int count, const std::string &type,
 
         // Only place the object if it falls within the height range
         if (y >= minHeight && y <= maxHeight) {
+            // Random rotation (0 to 360 degrees)
+            float rotationY = static_cast<float>(rand() % 360);
+
+            // Random scaling within the specified range
+            float scale = minScale + static_cast<float>(rand()) / RAND_MAX * (maxScale - minScale);
 
             // Randomly select a model from the available models for this type
             int modelIndex = rand() % models[type].size();
 
             // Add the object to the list
-            objects.push_back({glm::vec3(x, y, z), modelIndex, type});
+            objects.push_back({glm::vec3(x, y, z), modelIndex, type, rotationY, scale});
         }
-        // cout << "Object generated at: " << x << ", " << y << ", " << z << endl;
     }
 }
 
@@ -265,15 +270,11 @@ void Terrain::renderObjects(Shader &objectShader, const glm::mat4 &vp) {
         glm::mat4 model = glm::mat4(1.0f);
         model = glm::translate(model, object.position);
 
-        if (object.type == "tree") {
-            model = glm::scale(model, glm::vec3(4.0f)); // Example scaling
-        } else if (object.type == "rock") {
-            model = glm::scale(model, glm::vec3(0.5f));
-        } else if (object.type == "grass") {
-            model = glm::scale(model, glm::vec3(0.5f));
-        } else if (object.type == "bush") {
-            model = glm::scale(model, glm::vec3(0.5f));
-        }
+        // Apply random rotation around the Y-axis
+        model = glm::rotate(model, glm::radians(object.rotationY), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        // Apply random scaling
+        model = glm::scale(model, glm::vec3(object.scale));
 
         objectShader.setMat4("model", model);
         objectShader.setMat4("viewProjection", vp);
