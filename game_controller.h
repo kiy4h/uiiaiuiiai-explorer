@@ -37,6 +37,23 @@ public:
     void restartGame();
 
     int getCountdownTimer() const { return static_cast<int>(countdownTimer); }
+    void updateBoost(float deltaTime) {
+        if (collectibleManager.isBoostActive) {
+            soundManager.playSoundEffect("collect");
+            collectibleManager.isBoostActive = false;
+            boostTimer = boostDuration;
+        }
+        if (boostTimer > 0.0f) {
+            boostTimer -= deltaTime;
+
+            // Make the player spin (adjust speed as needed)
+            isRotate = true;
+            playerSpeed = 3.0f;
+        } else {
+            isRotate = false;
+            playerSpeed = 1.0f;
+        }
+    }
 
 private:
     GLFWwindow *window;
@@ -46,10 +63,16 @@ private:
     Camera *camera;
     Terrain *terrain;
     Model *player;
-    bool isRotate = true;
+    bool isRotate = false;
     float deltaTime = 0.0f;
     float lastFrame = 0.0f;
     float countdownTimer = 30;
+    float playerSpeed = 1;
+    glm::vec3 moveDirection = glm::vec3(0.0f);
+    glm::vec3 lastMoveDirection = glm::vec3(0.0f); // Default to no movement
+
+    float boostTimer = 0.0f;          // Remaining boost time
+    const float boostDuration = 6.0f; // Duration of the boost
 };
 
 #endif // GAME_CONTROLLER_H

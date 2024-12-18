@@ -42,8 +42,8 @@ void CollectibleManager::renderAll(Shader &shader, const glm::mat4 &vp) {
 void CollectibleManager::checkAllCollisions(const glm::vec3 &playerPosition, float radius) {
     for (auto &collectible : collectibles) {
         if (collectible.checkCollision(playerPosition, radius)) {
-            soundManager.playSoundEffect("collect");
             collectible.collect();
+            isBoostActive = true;
         }
     }
 }

@@ -99,7 +99,8 @@ int main() {
     // Load background music
     soundManager.loadBGM("audio/maxwell-bgm.mp3");
     // Load sound effects
-    soundManager.loadSoundEffect("collect", "audio/oiiaioiiiai-mini.mp3");
+    soundManager.loadSoundEffect("collect", "audio/oiiiiiai beat drop.mp3");
+    soundManager.loadSoundEffect("move", "audio/oiiaioiiiai-mini.mp3");
     soundManager.loadSoundEffect("win", "audio/yippee.mp3");
     soundManager.loadSoundEffect("lose", "audio/sad-moment.mp3");
 

@@ -22,8 +22,10 @@ void GameController::update() {
         // Update countdown timer
         countdownTimer -= deltaTime;
         // Check for player collision with collectibles
-        float playerRadius = 0.5f; // Example radius for collision detection
+        float playerRadius = 1.0f; // Example radius for collision detection
         collectibleManager.checkAllCollisions(player->GetPosition(), playerRadius);
+        // Update boost
+        updateBoost(deltaTime);
 
         // Check if all collectibles are collected
         if (collectibleManager.getCollectedCount() == collectibleManager.getTotalCount()) {
@@ -46,7 +48,7 @@ int GameController::getCollectedCount() const {
 }
 
 void GameController::processInput(GLFWwindow *window, float deltaTime) {
-    glm::vec3 moveDirection(0.0f);
+    moveDirection = glm::vec3(0.0f);
 
     // Flatten the camera's Front and Right vectors for movement on the XZ plane
     glm::vec3 frontXZ = glm::normalize(glm::vec3(camera->Front.x, 0.0f, camera->Front.z));
@@ -61,15 +63,22 @@ void GameController::processInput(GLFWwindow *window, float deltaTime) {
         moveDirection -= rightXZ; // Left
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         moveDirection += rightXZ; // Right
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) isRotate = isRotate ? 0 : 1;
 
-    // Normalize the movement direction if there's input
+    // If there's input, update lastMoveDirection
     if (glm::length(moveDirection) > 0.0f) {
-        float speed = 5.0f * deltaTime;                // Adjust speed as needed
-        moveDirection = glm::normalize(moveDirection); // Ensure uniform speed
+        lastMoveDirection = glm::normalize(moveDirection); // Normalize to ensure uniform speed
+    }
+
+    // Use lastMoveDirection only if boost is active (isRotate == true)
+    glm::vec3 curMoveDirection = (glm::length(moveDirection) > 0.0f) ? moveDirection : (isRotate ? lastMoveDirection : glm::vec3(0.0f));
+
+    // Prevent NaN values by ensuring curMoveDirection is valid
+    if (glm::length(curMoveDirection) > 0.0f || isRotate) {
+        float speed = 5.0f * deltaTime;                      // Adjust speed as needed
+        curMoveDirection = glm::normalize(curMoveDirection); // Ensure uniform speed
 
         glm::vec3 currentPosition = player->GetPosition();
-        glm::vec3 newPosition = currentPosition + moveDirection * speed;
+        glm::vec3 newPosition = currentPosition + curMoveDirection * speed * playerSpeed;
 
         // Keep the model on top of the terrain
         float terrainHeight = terrain->getHeightAt(newPosition.x, newPosition.z);
@@ -84,26 +93,11 @@ void GameController::processInput(GLFWwindow *window, float deltaTime) {
         // Set the model's new position
         player->SetPosition(newPosition);
 
-        // Calculate target rotation (yaw angle) based on moveDirection
-        float targetYaw = glm::degrees(glm::atan(moveDirection.z, moveDirection.x));
+        // Calculate target rotation (yaw angle) based on curMoveDirection
+        float targetYaw = glm::degrees(glm::atan(curMoveDirection.z, curMoveDirection.x));
         // Get the current yaw angle of the model
         float currentYaw = player->GetRotation().y;
-        if (isRotate) {
-            // Ensure angles are in the range [0, 360)
-            targetYaw = fmod(targetYaw + 360.0f, 360.0f);
-            currentYaw = fmod(currentYaw + 360.0f, 360.0f);
-
-            // Determine the shortest direction to rotate
-            float rotationSpeed = 400.0f * deltaTime; // Adjust speed (degrees per second)
-            currentYaw += rotationSpeed;
-
-            // Wrap currentYaw back to [0, 360) if needed
-            currentYaw = fmod(currentYaw + 360.0f, 360.0f);
-
-            // Update model's rotation (yaw only)
-            player->SetRotation(glm::vec3(0.0f, currentYaw, 0.0f));
-
-        } else {
+        if (!isRotate) {
             // Smoothly interpolate (lerp) between current and target yaw angles
             float smoothFactor = 0.3f; // Adjust for more/less smoothness
             float newYaw = glm::mix(currentYaw, -targetYaw + 90 + 360, smoothFactor);
@@ -111,6 +105,13 @@ void GameController::processInput(GLFWwindow *window, float deltaTime) {
             // Update model's rotation (yaw only)
             player->SetRotation(glm::vec3(0.0f, newYaw, 0.0f));
         }
+    }
+
+    // Handle rotation during boost
+    if (isRotate) {
+        glm::vec3 currentRotation = player->GetRotation();
+        currentRotation.y += 400.0f * deltaTime; // Spin at a speed of 400 degrees per second
+        player->SetRotation(currentRotation);
     }
 }
 
@@ -120,7 +121,7 @@ void GameController::initGame() {
     countdownTimer = 30.0f; // Set timer (e.g., 30 seconds)
 
     // collectibleManager.clear();            // Clear all collectibles
-    collectibleManager.setCollectibles(1); // Set the number of collectibles
+    collectibleManager.setCollectibles(2); // Set the number of collectibles
 
     terrain->loadTexture("images/grass.jpg");
     terrain->addModel("grass", "models/grass/grass.obj");
@@ -135,9 +136,11 @@ void GameController::initGame() {
     player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));
 
     // Initialize collectibles
-    float x = 256 / 2, z = 256 / 2 + 1;
-    float y = terrain->getHeightAt(x, z);
-    collectibleManager.addCollectible(glm::vec3(x, y, z), "models/little_star/little_star.obj");
+    float x = 256 / 2, z = 256 / 2;
+    float y = terrain->getHeightAt(x, z + 2);
+    collectibleManager.addCollectible(glm::vec3(x, y, z + 2), "models/little_star/little_star.obj");
+    y = terrain->getHeightAt(x, z - 2);
+    collectibleManager.addCollectible(glm::vec3(x, y, z - 2), "models/little_star/little_star.obj");
     // for (int i = 0; i < 5; ++i) {
     //     x = static_cast<float>(rand() % terrain->getWidth());
     //     z = static_cast<float>(rand() % terrain->getHeight());
@@ -156,8 +159,9 @@ void GameController::restartGame() {
     // restart game; do not regenerate terrain.
     gameState = GameState::Initializing; // Reset game state
     countdownTimer = 30.0f;              // Set timer (e.g., 30 seconds)
+    boostTimer = 0.0f;
 
-    collectibleManager.setCollectibles(1); // Set the number of collectibles
+    collectibleManager.setCollectibles(2); // Set the number of collectibles
 
     // Reset player position
     player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));

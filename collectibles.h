@@ -35,6 +35,7 @@ private:
 
 class CollectibleManager {
 public:
+    bool isBoostActive = false;
     CollectibleManager(SoundManager &soundManager)
         : soundManager(soundManager) {}
     void addCollectible(const glm::vec3 &position, const std::string &type);
