@@ -1,4 +1,4 @@
-#include "sound_manager.h"
+#include "lib/sound_manager.h"
 #include <iostream>
 
 SoundManager::SoundManager() : currentBGM(nullptr) {

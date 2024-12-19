@@ -10,12 +10,12 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <iostream>
 
-#include "game_controller.h"
-#include "model.h"
-#include "popup.h"
-#include "shader.h"
-#include "skybox.h"
-#include "sound_manager.h"
+#include "lib/game_controller.h"
+#include "lib/model.h"
+#include "lib/popup.h"
+#include "lib/shader.h"
+#include "lib/skybox.h"
+#include "lib/sound_manager.h"
 
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
 void mouse_callback(GLFWwindow *window, double xpos, double ypos);

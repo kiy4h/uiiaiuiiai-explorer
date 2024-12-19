@@ -1,4 +1,4 @@
-#include "game_controller.h"
+#include "lib/game_controller.h"
 
 GameController::GameController(GLFWwindow *window, Camera *camera, CollectibleManager &collectibleManager, SoundManager &soundManager, Terrain *terrain, Model *player)
     : window(window), camera(camera), collectibleManager(collectibleManager), soundManager(soundManager), terrain(terrain), player(player), gameState(GameState::Initializing) {

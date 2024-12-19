@@ -1,4 +1,4 @@
-#include "collectibles.h"
+#include "lib/collectibles.h"
 
 Collectible::Collectible(const glm::vec3 &position, const std::string &type)
     : position(position), type(type), collected(false), model(type) {}

@@ -14,8 +14,8 @@
 
 #include <stb/stb_image.h>
 
-#include "mesh.h"
-#include "shader.h"
+#include "lib/mesh.h"
+#include "lib/shader.h"
 
 #include <fstream>
 #include <iostream>
@@ -186,7 +186,14 @@ private:
         textures.insert(textures.end(), diffuseMaps.begin(), diffuseMaps.end());
         vector<Texture> specularMaps = loadMaterialTextures(material, aiTextureType_SPECULAR, "texture_specular");
         textures.insert(textures.end(), specularMaps.begin(), specularMaps.end());
+        // normal maps
+        std::vector<Texture> normalMaps = loadMaterialTextures(material, aiTextureType_HEIGHT, "texture_normal");
+        textures.insert(textures.end(), normalMaps.begin(), normalMaps.end());
+        // height maps
+        std::vector<Texture> heightMaps = loadMaterialTextures(material, aiTextureType_AMBIENT, "texture_height");
+        textures.insert(textures.end(), heightMaps.begin(), heightMaps.end());
 
+        // ����һ�� Mesh ����
         return Mesh(vertices, indices, textures);
     }
 
@@ -248,8 +255,8 @@ unsigned int TextureFromFile(const char *path, const string &directory, bool gam
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
         stbi_image_free(data);
-    } else {
-        std::cout << "Texture failed to load at path: " << path << std::endl;
+    } 
+    else {
         stbi_image_free(data);
     }
 

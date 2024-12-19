@@ -1,4 +1,4 @@
-#include "terrain.h"
+#include "lib/terrain.h"
 #include <glad/glad.h>
 
 #include <GLFW/glfw3.h> // Make sure to include OpenGL context libraries
@@ -44,6 +44,7 @@ bool Terrain::loadHeightmap(const std::string &path) {
     std::cout << "Heightmap loaded successfully! Width: " << heightmapWidth << ", Height: " << heightmapHeight << std::endl;
     return true;
 }
+
 void Terrain::generateTerrain() {
     minCorner = glm::vec3(0.0f, FLT_MAX, 0.0f);                                 // Initialize minCorner
     maxCorner = glm::vec3((float)terrainWidth, -FLT_MAX, (float)terrainHeight); // Initialize maxCorner

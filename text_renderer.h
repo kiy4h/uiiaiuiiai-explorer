@@ -7,7 +7,7 @@
 #include <map>
 #include <string>
 #include FT_FREETYPE_H
-#include "Shader.h"
+#include "lib/shader.h"
 
 struct Character {
     unsigned int TextureID; // Texture ID of the glyph

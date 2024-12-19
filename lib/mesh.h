@@ -6,7 +6,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "shader.h"
+#include "lib/shader.h"
 
 #include <fstream>
 #include <iostream>
@@ -66,24 +66,30 @@ public:
         unsigned int normalNr = 1;
         unsigned int heightNr = 1;
         for (unsigned int i = 0; i < textures.size(); i++) {
-            // �ڰ�֮ǰ������Ӧ��������Ԫ
-            glActiveTexture(GL_TEXTURE0 + i);
-            // ��ȡ������ţ�diffuse_textureN �е� N��
-            string number;
-            string name = textures[i].type;
-            if (name == "texture_diffuse")
-                number = std::to_string(diffuseNr++); // �޷�������ת�Ƶ����У���ͬ
-            else if (name == "texture_specular")
-                number = std::to_string(specularNr++);
-            else if (name == "texture_normal")
-                number = std::to_string(normalNr++);
-            else if (name == "texture_height")
-                number = std::to_string(heightNr++);
+            if(textures[i].type == "texture_diffuse"){
+                // �ڰ�֮ǰ������Ӧ��������Ԫ
+                glActiveTexture(GL_TEXTURE0 + i);
+                // ��ȡ������ţ�diffuse_textureN �е� N��
+                string number;
+                string name = textures[i].type;
+                if (name == "texture_diffuse")
+                    number = std::to_string(diffuseNr++); // �޷�������ת�Ƶ����У���ͬ
+                else if (name == "texture_specular")
+                    number = std::to_string(specularNr++);
+                else if (name == "texture_normal")
+                    number = std::to_string(normalNr++);
+                else if (name == "texture_height")
+                    number = std::to_string(heightNr++);
 
-            // ��ȡ��������Ϊ��ȷ��������Ԫ
-            glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
-            // ������
-            glBindTexture(GL_TEXTURE_2D, textures[i].id);
+                // ��ȡ��������Ϊ��ȷ��������Ԫ
+                glUniform1i(glGetUniformLocation(shader.ID, (name + number).c_str()), i);
+                // ������
+                glBindTexture(GL_TEXTURE_2D, textures[i].id);
+            } 
+            // else if (textures[i].type == "color_diffuse") {
+            //     // Kirim warna ke shader jika tidak ada tekstur
+            //     shader.setVec3("materialColor", textures[i].color);
+            // }
         }
 
         // ���� mesh

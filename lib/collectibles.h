@@ -1,8 +1,8 @@
 #ifndef COLLECTIBLES_H
 #define COLLECTIBLES_H
 
-#include "model.h"
-#include "sound_manager.h"
+#include "lib/model.h"
+#include "lib/sound_manager.h"
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <vector>

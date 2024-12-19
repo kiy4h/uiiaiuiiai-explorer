@@ -1,8 +1,8 @@
 #ifndef SKYBOX_H
 #define SKYBOX_H
 
-#include "camera.h"
-#include "shader.h"
+#include "lib/camera.h"
+#include "lib/shader.h"
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <string>
