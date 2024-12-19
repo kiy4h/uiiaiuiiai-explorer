@@ -30,7 +30,7 @@ bool Collectible::checkCollision(const glm::vec3 &playerPosition, float radius) 
 }
 
 void CollectibleManager::addCollectible(const glm::vec3 &position, const std::string &type) {
-    collectibles.emplace_back(position, type);
+    collectibles.emplace_back(position + glm::vec3(0.0f, -0.5f, 0.0f), type);
 }
 
 void CollectibleManager::renderAll(Shader &shader, const glm::mat4 &vp) {

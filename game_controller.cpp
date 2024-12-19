@@ -147,13 +147,13 @@ void GameController::initGame() {
     collectibleManager.addCollectible(glm::vec3(x, y, z + 2), "models/little_star/little_star.obj");
     y = terrain->getHeightAt(x, z - 2);
     collectibleManager.addCollectible(glm::vec3(x, y, z - 2), "models/little_star/little_star.obj");
-    // for (int i = 0; i < 5; ++i) {
-    //     x = static_cast<float>(rand() % terrain->getWidth());
-    //     z = static_cast<float>(rand() % terrain->getHeight());
-    //     y = terrain->getHeightAt(x, z);
-    //     collectibleManager.addCollectible(glm::vec3(x, y, z), "models/little_star/little_star.obj");
-    //     std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
-    // }
+    for (int i = 0; i < 5; ++i) {
+        x = static_cast<float>(rand() % terrain->getWidth());
+        z = static_cast<float>(rand() % terrain->getHeight());
+        y = terrain->getHeightAt(x, z);
+        collectibleManager.addCollectible(glm::vec3(x, y, z), "models/little_star/little_star.obj");
+        std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
+    }
     cout << "Collectibles initialized!" << endl;
 
     lastFrame = glfwGetTime();      // Reset timing
