@@ -1,8 +1,8 @@
 #ifndef TERRAIN_H
 #define TERRAIN_H
 
-#include "lib/model.h"
-#include "lib/shader.h"
+#include "model.h"
+#include "shader.h"
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <stb/stb_image.h> // For loading PNG heightmap images

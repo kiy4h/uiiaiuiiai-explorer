@@ -1,7 +1,7 @@
 #ifndef POPUP_H
 #define POPUP_H
 
-#include "lib/shader.h"
+#include "shader.h"
 #include "text_renderer.h"
 #include <glm/glm.hpp>
 #include <string>
