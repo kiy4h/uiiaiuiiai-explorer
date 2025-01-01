@@ -7,7 +7,7 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${fileDirname}\\${fileBasenameNoExtension}.cpp",
+                "main.cpp",
                 "glad.c",
                 "terrain.cpp",
                 "skybox.cpp",
@@ -16,7 +16,7 @@
                 "game_controller.cpp",
                 "sound_manager.cpp",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe",
+                "main.exe",
                 "-lSDL2_mixer",
                 "-lSDL2",
                 "-lglfw3",

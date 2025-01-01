@@ -135,14 +135,23 @@ void GameController::initGame() {
     collectibleManager.setCollectibles(2); // Set the number of collectibles
 
     terrain->loadTexture("images/grass_green.png");
+    terrain->addModel("grasstall", "models/grass_tall/grass_tall.obj");
+    terrain->generateObjects(500, "grasstall", 0.0f, 10.0f, 0.5f, 0.002f, 0.01f);
     terrain->addModel("grass", "models/grass/grass.obj");
     terrain->generateObjects(500, "grass", 0.0f, 10.0f, 0.5f, 0.2f, 0.5f);
-    terrain->addModel("rock", "models/rock_scan/rock_scan.obj");
-    terrain->generateObjects(20, "rock", 2.0f, 20.0f, 1.0f, 0.5f, 1.0f);
+
+    terrain->addModel("fern_grass", "models/fern_grass/fern_grass.obj");
+    terrain->generateObjects(100, "fern_grass", 0.0f, 10.0f, 0.5f, 0.05f, 0.3f);
     terrain->addModel("bush", "models/bush/shrub.obj");
     terrain->generateObjects(100, "bush", 1.0f, 10.0f, 1.0f, 0.2f, 0.7f);
+
+    terrain->addModel("rock", "models/rock_scan/rock_scan.obj");
+    terrain->generateObjects(20, "rock", 2.0f, 20.0f, 1.0f, 0.5f, 1.0f);
+
+    terrain->addModel("pine_tree", "models/pine_tree/pine_tree.obj");
+    terrain->generateObjects(50, "pine_tree", 2.0f, 15.0f, 5.0f, 0.01f, 0.03f);
     terrain->addModel("tree", "models/pohon/lowpoly_tree.obj");
-    terrain->generateObjects(100, "tree", 2.0f, 15.0f, 5.0f, 3.0f, 5.0f);
+    terrain->generateObjects(50, "tree", 2.0f, 15.0f, 5.0f, 3.0f, 5.0f);
     cout << "Terrain objects initialized!" << endl;
 
     player->SetPosition(glm::vec3(128 / 2, terrain->getHeightAt(128 / 2, 128 / 2), 128 / 2));
