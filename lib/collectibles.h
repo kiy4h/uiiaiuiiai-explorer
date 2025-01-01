@@ -3,15 +3,17 @@
 
 #include "model.h"
 #include "sound_manager.h"
+#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtx/string_cast.hpp>
 #include <vector>
 
 class Collectible {
 public:
-    Collectible(const glm::vec3 &position, const std::string &type);
+    Collectible(const glm::vec3 &position, const std::string &type, float scale = 1.0f);
 
     void render(Shader &shader, const glm::mat4 &vp);
+    void update(float deltaTime); // Update animation state
     void updateLight(Shader &shader, int lightIndex) const;
     bool checkCollision(const glm::vec3 &playerPosition, float radius);
 
@@ -31,6 +33,11 @@ private:
     float lightIntensity; // Intensity of the light
     bool collected;       // Has the collectible been collected?
     Model model;          // The model for rendering
+    float scale = 0.01f;  // Scale of the model
+
+    glm::vec3 currentPos; // Current position for animation
+    float rotationY;      // Current rotation angle around Y-axis
+    float bobbingOffset;  // Current offset for bobbing animation
 };
 
 class CollectibleManager {
@@ -38,7 +45,7 @@ public:
     bool isBoostActive = false;
     CollectibleManager(SoundManager &soundManager)
         : soundManager(soundManager) {}
-    void addCollectible(const glm::vec3 &position, const std::string &type);
+    void addCollectible(const glm::vec3 &position, const std::string &type, float scale = 0.01f);
     void uncollectAll();
     void renderAll(Shader &shader, const glm::mat4 &vp);
     void checkAllCollisions(const glm::vec3 &playerPosition, float radius);

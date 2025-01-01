@@ -19,6 +19,11 @@ void GameController::update() {
         // Input handling
         processInput(window, deltaTime);
 
+        // Update collectibles
+        for (auto &collectible : collectibleManager.getCollectibles()) {
+            collectible.update(deltaTime);
+        }
+
         // Update countdown timer
         countdownTimer -= deltaTime;
         // Check for player collision with collectibles
@@ -129,14 +134,14 @@ void GameController::initGame() {
     collectibleManager.setCollectibles(2); // Set the number of collectibles
 
     terrain->loadTexture("images/grass.jpg");
-    terrain->addModel("grass", "models/grass/grass.obj");
-    terrain->generateObjects(1000, "grass", 0.0f, 10.0f, 0.5f, 0.2f, 0.5f);
-    terrain->addModel("rock", "models/rock_scan/rock_scan.obj");
-    terrain->generateObjects(100, "rock", 2.0f, 20.0f, 1.0f, 0.5f, 1.0f);
-    terrain->addModel("bush", "models/bush/shrub.obj");
-    terrain->generateObjects(1000, "bush", 1.0f, 10.0f, 1.0f, 0.2f, 0.7f);
-    terrain->addModel("tree", "models/pohon/lowpoly_tree.obj");
-    terrain->generateObjects(500, "tree", 2.0f, 15.0f, 5.0f, 3.0f, 5.0f);
+    // terrain->addModel("grass", "models/grass/grass.obj");
+    // terrain->generateObjects(1000, "grass", 0.0f, 10.0f, 0.5f, 0.2f, 0.5f);
+    // terrain->addModel("rock", "models/rock_scan/rock_scan.obj");
+    // terrain->generateObjects(100, "rock", 2.0f, 20.0f, 1.0f, 0.5f, 1.0f);
+    // terrain->addModel("bush", "models/bush/shrub.obj");
+    // terrain->generateObjects(1000, "bush", 1.0f, 10.0f, 1.0f, 0.2f, 0.7f);
+    // terrain->addModel("tree", "models/pohon/lowpoly_tree.obj");
+    // terrain->generateObjects(500, "tree", 2.0f, 15.0f, 5.0f, 3.0f, 5.0f);
     cout << "Terrain objects initialized!" << endl;
 
     player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));
@@ -144,16 +149,18 @@ void GameController::initGame() {
     // Initialize collectibles
     float x = 256 / 2, z = 256 / 2;
     float y = terrain->getHeightAt(x, z + 2);
-    collectibleManager.addCollectible(glm::vec3(x, y, z + 2), "models/little_star/little_star.obj");
+    collectibleManager.addCollectible(glm::vec3(x, y, z + 2), "models/star/star.obj");
     y = terrain->getHeightAt(x, z - 2);
-    collectibleManager.addCollectible(glm::vec3(x, y, z - 2), "models/little_star/little_star.obj");
+    collectibleManager.addCollectible(glm::vec3(x, y, z - 2), "models/star/star.obj");
+
     for (int i = 0; i < 5; ++i) {
         x = static_cast<float>(rand() % terrain->getWidth());
         z = static_cast<float>(rand() % terrain->getHeight());
         y = terrain->getHeightAt(x, z);
-        collectibleManager.addCollectible(glm::vec3(x, y, z), "models/little_star/little_star.obj");
+        collectibleManager.addCollectible(glm::vec3(x, y, z), "models/star/star.obj");
         std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
     }
+
     cout << "Collectibles initialized!" << endl;
 
     lastFrame = glfwGetTime();      // Reset timing

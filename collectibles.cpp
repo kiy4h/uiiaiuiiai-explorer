@@ -1,26 +1,45 @@
 #include "lib/collectibles.h"
 
-Collectible::Collectible(const glm::vec3 &position, const std::string &type)
-    : position(position), type(type), collected(false), model(type) {}
+Collectible::Collectible(const glm::vec3 &position, const std::string &type, float scale)
+    : position(position), currentPos(position), type(type), collected(false), model(type),
+      scale(scale), rotationY(0.0f), bobbingOffset(0.0f) {}
 
 void Collectible::render(Shader &shader, const glm::mat4 &vp) {
     if (!collected) {
-        glm::mat4 modelMatrix = glm::mat4(1.0f);             // Identity matrix
-        modelMatrix = glm::translate(modelMatrix, position); // Apply position transformation
+        glm::mat4 modelMatrix = glm::mat4(1.0f);
+        modelMatrix = glm::translate(modelMatrix, currentPos);                                        // Apply animated position
+        modelMatrix = glm::rotate(modelMatrix, glm::radians(rotationY), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around Y-axis
+        modelMatrix = glm::scale(modelMatrix, glm::vec3(scale));                                      // Apply scaling
 
         shader.use();
-        shader.setInt("texture_diffuse", 0); // Tell the shader to use texture unit 0
-
-        // Set model matrix for rendering
+        shader.setInt("texture_diffuse", 0); // Use texture unit 0
         shader.setMat4("model", modelMatrix);
         shader.setMat4("viewProjection", vp);
 
-        // Set emissive color and intensity for the collectible
-        shader.setVec3("emissiveColor", glm::vec3(1.0f, 0.8f, 0.2f)); // Golden glow color
-        shader.setFloat("emissiveIntensity", 1.0f);                   // Increase intensity for better glow effect
+        // Set emissive color and intensity
+        shader.setVec3("emissiveColor", glm::vec3(1.0f, 0.8f, 0.2f)); // Golden glow
+        shader.setFloat("emissiveIntensity", 1.0f);
 
-        // Draw the model
         model.Draw(shader);
+    }
+}
+
+void Collectible::update(float deltaTime) {
+    if (!collected) {
+        // Increment rotation angle
+        float rotationSpeed = 100.0f; // Degrees per second
+        rotationY += rotationSpeed * deltaTime;
+        if (rotationY > 360.0f) {
+            rotationY -= 360.0f; // Keep rotation within 0-360 degrees
+        }
+
+        // Update bobbing offset
+        float bobbingSpeed = 2.0f;  // Cycles per second
+        float bobbingHeight = 0.2f; // Maximum height offset
+        bobbingOffset = bobbingHeight * sin(glfwGetTime() * bobbingSpeed);
+
+        // Update current position for rendering
+        currentPos = position + glm::vec3(0.0f, bobbingOffset, 0.0f);
     }
 }
 
@@ -29,8 +48,8 @@ bool Collectible::checkCollision(const glm::vec3 &playerPosition, float radius) 
     return !collected && (distance < radius);
 }
 
-void CollectibleManager::addCollectible(const glm::vec3 &position, const std::string &type) {
-    collectibles.emplace_back(position + glm::vec3(0.0f, -0.5f, 0.0f), type);
+void CollectibleManager::addCollectible(const glm::vec3 &position, const std::string &type, float scale) {
+    collectibles.emplace_back(position + glm::vec3(0.0f, 0.5f, 0.0f), type, scale);
 }
 
 void CollectibleManager::renderAll(Shader &shader, const glm::mat4 &vp) {
