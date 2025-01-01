@@ -98,8 +98,9 @@ void GameController::processInput(GLFWwindow *window, float deltaTime) {
         newPosition.y = glm::mix(currentPosition.y, terrainHeight, smoothFactor);
 
         // Clamp position to stay within terrain bounds
-        newPosition.x = glm::clamp(newPosition.x, 0.0f, (float)(terrain->getWidth() - 1));
-        newPosition.z = glm::clamp(newPosition.z, 0.0f, (float)(terrain->getHeight() - 1));
+        float terrainOffset = 10.0f; // Adjust for more/less offset
+        newPosition.x = glm::clamp(newPosition.x, terrainOffset, (float)(terrain->getWidth() - 1) - terrainOffset);
+        newPosition.z = glm::clamp(newPosition.z, terrainOffset, (float)(terrain->getHeight() - 1) - terrainOffset);
         // Set the model's new position
         player->SetPosition(newPosition);
 
@@ -133,7 +134,7 @@ void GameController::initGame() {
     // collectibleManager.clear();            // Clear all collectibles
     collectibleManager.setCollectibles(2); // Set the number of collectibles
 
-    terrain->loadTexture("images/grass.jpg");
+    terrain->loadTexture("images/grass_green.png");
     // terrain->addModel("grass", "models/grass/grass.obj");
     // terrain->generateObjects(1000, "grass", 0.0f, 10.0f, 0.5f, 0.2f, 0.5f);
     // terrain->addModel("rock", "models/rock_scan/rock_scan.obj");
@@ -144,10 +145,10 @@ void GameController::initGame() {
     // terrain->generateObjects(500, "tree", 2.0f, 15.0f, 5.0f, 3.0f, 5.0f);
     cout << "Terrain objects initialized!" << endl;
 
-    player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));
+    player->SetPosition(glm::vec3(128 / 2, terrain->getHeightAt(128 / 2, 128 / 2), 128 / 2));
 
     // Initialize collectibles
-    float x = 256 / 2, z = 256 / 2;
+    float x = 128 / 2, z = 128 / 2;
     float y = terrain->getHeightAt(x, z + 2);
     collectibleManager.addCollectible(glm::vec3(x, y, z + 2), "models/star/star.obj");
     y = terrain->getHeightAt(x, z - 2);
@@ -177,7 +178,7 @@ void GameController::restartGame() {
     collectibleManager.setCollectibles(2); // Set the number of collectibles
 
     // Reset player position
-    player->SetPosition(glm::vec3(256 / 2, terrain->getHeightAt(256 / 2, 256 / 2), 256 / 2));
+    player->SetPosition(glm::vec3(128 / 2, terrain->getHeightAt(128 / 2, 128 / 2), 128 / 2));
 
     // enable already existing collectibles
     collectibleManager.uncollectAll();
