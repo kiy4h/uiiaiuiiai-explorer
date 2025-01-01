@@ -264,8 +264,15 @@ void Terrain::generateObjects(int count, const std::string &type,
     }
 }
 
-void Terrain::renderObjects(Shader &objectShader, const glm::mat4 &vp) {
+void Terrain::renderObjects(Shader &objectShader, const glm::mat4 &vp, const glm::vec3 &cameraPosition) {
     objectShader.use();
+
+    // Sort objects by distance to the camera (farthest first)
+    std::sort(objects.begin(), objects.end(), [&](const ObjectInstance &a, const ObjectInstance &b) {
+        float distA = glm::distance(cameraPosition, a.position);
+        float distB = glm::distance(cameraPosition, b.position);
+        return distA > distB; // Farthest first
+    });
 
     for (const auto &object : objects) {
         glm::mat4 model = glm::mat4(1.0f);

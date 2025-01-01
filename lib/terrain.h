@@ -29,7 +29,7 @@ public:
     void generateObjects(int count, const std::string &type,
                          float minHeight, float maxHeight, float spread,
                          float minScale, float maxScale);
-    void renderObjects(Shader &objectShader, const glm::mat4 &vp);
+    void renderObjects(Shader &objectShader, const glm::mat4 &vp, const glm::vec3 &cameraPosition);
 
 private:
     bool loadHeightmap(const std::string &path);

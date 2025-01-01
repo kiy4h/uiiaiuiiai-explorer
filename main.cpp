@@ -231,7 +231,7 @@ int main() {
         terrain->render(terrainShader, vp); // Render the terrain
 
         // ** Render objects **
-        terrain->renderObjects(playerShader, vp);
+        terrain->renderObjects(playerShader, vp, camera->Position);
         // Render the scoreboard
         std::string scoreText = "Score: " + std::to_string(gameController.getCollectedCount()) + "/" + std::to_string(collectibleManager.getTotalCount());
         textRenderer.RenderText(textShader, scoreText, SCR_WIDTH - 150.0f, SCR_HEIGHT - 50.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // Top-right corner
