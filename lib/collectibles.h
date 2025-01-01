@@ -38,6 +38,7 @@ private:
     glm::vec3 currentPos; // Current position for animation
     float rotationY;      // Current rotation angle around Y-axis
     float bobbingOffset;  // Current offset for bobbing animation
+    float bobbingPhase;   // Initial phase for bobbing animation
 };
 
 class CollectibleManager {

@@ -2,7 +2,17 @@
 
 Collectible::Collectible(const glm::vec3 &position, const std::string &type, float scale)
     : position(position), currentPos(position), type(type), collected(false), model(type),
-      scale(scale), rotationY(0.0f), bobbingOffset(0.0f) {}
+      scale(scale), rotationY(static_cast<float>(rand() % 360)),
+      bobbingPhase(static_cast<float>(rand()) / RAND_MAX * 2.0f * M_PI) {
+
+    // Randomize initial rotation (0 to 360 degrees)
+    rotationY = static_cast<float>(rand() % 360);
+
+    // Adjust the initial bobbing offset
+    float bobbingSpeed = 2.0f; // Match the bobbing speed in update()
+    bobbingOffset = 0.2f * sin(bobbingPhase * bobbingSpeed);
+    currentPos = position + glm::vec3(0.0f, bobbingOffset, 0.0f);
+}
 
 void Collectible::render(Shader &shader, const glm::mat4 &vp) {
     if (!collected) {
@@ -36,7 +46,7 @@ void Collectible::update(float deltaTime) {
         // Update bobbing offset
         float bobbingSpeed = 2.0f;  // Cycles per second
         float bobbingHeight = 0.2f; // Maximum height offset
-        bobbingOffset = bobbingHeight * sin(glfwGetTime() * bobbingSpeed);
+        bobbingOffset = bobbingHeight * sin(glfwGetTime() * bobbingSpeed + bobbingPhase);
 
         // Update current position for rendering
         currentPos = position + glm::vec3(0.0f, bobbingOffset, 0.0f);

@@ -134,6 +134,8 @@ int main() {
     Popup losePopup("You Lose!", glm::vec3(1.0f, 0.0f, 0.0f), glm::vec4(0.0f, 0.0f, 0.0f, 0.5f));
     cout << "Popups initialized!" << endl;
 
+    srand(static_cast<unsigned int>(time(0))); // Seed the random number generator
+
     // Play background music
     soundManager.changeBGM("game");
     soundManager.playBGM();
