@@ -103,7 +103,7 @@ int main() {
     cout << "Sound manager initialized!" << endl;
 
     // Initialize terrain
-    terrain = new Terrain("images/height-map.png", 10.0f, 128, 128);
+    terrain = new Terrain("images/height-map.png", 5.0f, 128, 128);
     // Initialize player
     player = new Model(FileSystem::getPath("models/oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
 
