@@ -2,7 +2,7 @@
 
 GameController::GameController(GLFWwindow *window, Camera *camera, CollectibleManager &collectibleManager, SoundManager &soundManager, Terrain *terrain, Model *player)
     : window(window), camera(camera), collectibleManager(collectibleManager), soundManager(soundManager), terrain(terrain), player(player), gameState(GameState::Initializing) {
-    countdownTimer = 30.0f; // Set timer (e.g., 30 seconds)
+    countdownTimer = 100.0f; // Set timer (e.g., 30 seconds)
 
     // Optionally set up initial game states or behaviors
     std::cout << "GameController initialized!" << std::endl;
@@ -137,7 +137,7 @@ void GameController::processInput(GLFWwindow *window, float deltaTime) {
 void GameController::initGame() {
     // Reset game state
     gameState = GameState::Initializing;
-    countdownTimer = 60.0f; // Set timer (e.g., 30 seconds)
+    countdownTimer = 100.0f; // Set timer (e.g., 30 seconds)
 
     // collectibleManager.clear();            // Clear all collectibles
     collectibleManager.setCollectibles(10); // Set the number of collectibles
@@ -189,7 +189,7 @@ void GameController::initGame() {
 void GameController::restartGame() {
     // restart game; do not regenerate terrain.
     gameState = GameState::Initializing; // Reset game state
-    countdownTimer = 60.0f;              // Set timer (e.g., 30 seconds)
+    countdownTimer = 100.0f;             // Set timer (e.g., 30 seconds)
     boostTimer = 0.0f;
 
     collectibleManager.setCollectibles(10); // Set the number of collectibles
