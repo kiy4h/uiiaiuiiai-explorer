@@ -53,6 +53,14 @@ int GameController::getCollectedCount() const {
 }
 
 void GameController::processInput(GLFWwindow *window, float deltaTime) {
+
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS) {
+        soundManager.adjustOverallVolume(8); // Increase volume
+    }
+    if (glfwGetKey(window, GLFW_KEY_M) == GLFW_PRESS) {
+        soundManager.adjustOverallVolume(-8); // Decrease volume
+    }
+
     moveDirection = glm::vec3(0.0f);
 
     // Flatten the camera's Front and Right vectors for movement on the XZ plane
@@ -99,8 +107,8 @@ void GameController::processInput(GLFWwindow *window, float deltaTime) {
 
         // Clamp position to stay within terrain bounds
         float terrainOffset = 10.0f; // Adjust for more/less offset
-        newPosition.x = glm::clamp(newPosition.x, terrainOffset, (float)(terrain->getWidth() - 1) - terrainOffset);
-        newPosition.z = glm::clamp(newPosition.z, terrainOffset, (float)(terrain->getHeight() - 1) - terrainOffset);
+        newPosition.x = glm::clamp(newPosition.x, terrainOffset, (float)(terrain->getWidth()) - terrainOffset);
+        newPosition.z = glm::clamp(newPosition.z, terrainOffset, (float)(terrain->getHeight()) - terrainOffset);
         // Set the model's new position
         player->SetPosition(newPosition);
 
@@ -141,17 +149,17 @@ void GameController::initGame() {
     terrain->generateObjects(500, "grass", 0.0f, 10.0f, 0.5f, 0.2f, 0.5f);
 
     terrain->addModel("fern_grass", "models/fern_grass/fern_grass.obj");
-    terrain->generateObjects(100, "fern_grass", 0.0f, 10.0f, 0.5f, 0.02f, 0.1f);
+    terrain->generateObjects(500, "fern_grass", 0.0f, 10.0f, 0.5f, 0.02f, 0.1f);
     terrain->addModel("bush", "models/bush/shrub.obj");
     terrain->generateObjects(100, "bush", 1.0f, 10.0f, 1.0f, 0.2f, 0.7f);
 
     terrain->addModel("rock", "models/rock_scan/rock_scan.obj");
-    terrain->generateObjects(20, "rock", 2.0f, 20.0f, 1.0f, 0.5f, 1.0f);
+    terrain->generateObjects(50, "rock", 2.0f, 20.0f, 1.0f, 0.5f, 1.0f);
 
     terrain->addModel("pine_tree", "models/pine_tree/pine_tree.obj");
-    terrain->generateObjects(50, "pine_tree", 2.0f, 15.0f, 5.0f, 0.01f, 0.03f);
+    terrain->generateObjects(100, "pine_tree", 2.0f, 15.0f, 5.0f, 0.01f, 0.03f);
     terrain->addModel("tree", "models/pohon/lowpoly_tree.obj");
-    terrain->generateObjects(50, "tree", 2.0f, 15.0f, 5.0f, 3.0f, 5.0f);
+    terrain->generateObjects(100, "tree", 2.0f, 15.0f, 5.0f, 3.0f, 5.0f);
     cout << "Terrain objects initialized!" << endl;
 
     player->SetPosition(glm::vec3(128 / 2, terrain->getHeightAt(128 / 2, 128 / 2), 128 / 2));
@@ -163,12 +171,12 @@ void GameController::initGame() {
     y = terrain->getHeightAt(x, z - 2);
     collectibleManager.addCollectible(glm::vec3(x, y, z - 2), "models/star/star.obj");
 
-    for (int i = 0; i < 20; ++i) {
-        x = static_cast<float>(rand() % terrain->getWidth() - 20.0f) + 10;
-        z = static_cast<float>(rand() % terrain->getHeight() - 20.0f) + 10;
+    for (int i = 0; i < 30; ++i) {
+        x = static_cast<float>(rand() % 128 - 20.0f) + 10;
+        z = static_cast<float>(rand() % 128 - 20.0f) + 10;
         y = terrain->getHeightAt(x, z);
         collectibleManager.addCollectible(glm::vec3(x, y, z), "models/star/star.obj");
-        std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
+        // std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
     }
 
     cout << "Collectibles initialized!" << endl;

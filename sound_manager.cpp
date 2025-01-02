@@ -1,4 +1,6 @@
 #include "lib/sound_manager.h"
+#include <glm/glm.hpp>
+#include <glm/gtc/constants.hpp>
 #include <iostream>
 
 SoundManager::SoundManager() : currentBGM(nullptr) {
@@ -95,4 +97,25 @@ void SoundManager::stopFootsteps() {
         Mix_HaltChannel(footstepChannel); // Stop the footstep sound
         footstepChannel = -1;
     }
+}
+
+void SoundManager::setBGMVolume(int volume) {
+    int adjustedVolume = (volume * overallVolume) / MIX_MAX_VOLUME;
+    Mix_VolumeMusic(adjustedVolume);
+}
+
+void SoundManager::setEffectVolume(int volume) {
+    int adjustedVolume = (volume * overallVolume) / MIX_MAX_VOLUME;
+    for (auto &pair : soundEffects) {
+        Mix_VolumeChunk(pair.second, adjustedVolume);
+    }
+}
+
+void SoundManager::adjustOverallVolume(int delta) {
+    overallVolume = glm::clamp(overallVolume + delta, 0, MIX_MAX_VOLUME);
+
+    // Update BGM and effect volumes with the new overall volume
+    setBGMVolume(MIX_MAX_VOLUME);    // Use maximum input for base volume
+    setEffectVolume(MIX_MAX_VOLUME); // Use maximum input for base volume
+    std::cout << "Overall Volume: " << overallVolume << std::endl;
 }
