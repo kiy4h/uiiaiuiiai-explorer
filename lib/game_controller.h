@@ -39,9 +39,11 @@ public:
     int getCountdownTimer() const { return static_cast<int>(countdownTimer); }
     void updateBoost(float deltaTime) {
         if (collectibleManager.isBoostActive) {
-            soundManager.playSoundEffect("collect");
+            if (!isRotate) {
+                soundManager.playSoundEffect("collect");
+                boostTimer = boostDuration;
+            }
             collectibleManager.isBoostActive = false;
-            boostTimer = boostDuration;
         }
         if (boostTimer > 0.0f) {
             boostTimer -= deltaTime;

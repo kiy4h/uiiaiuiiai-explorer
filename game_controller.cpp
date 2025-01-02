@@ -157,9 +157,9 @@ void GameController::initGame() {
     terrain->generateObjects(50, "rock", 2.0f, 20.0f, 1.0f, 0.5f, 1.0f);
 
     terrain->addModel("pine_tree", "models/pine_tree/pine_tree.obj");
-    terrain->generateObjects(100, "pine_tree", 2.0f, 15.0f, 5.0f, 0.01f, 0.03f);
+    terrain->generateObjects(300, "pine_tree", 2.0f, 15.0f, 5.0f, 0.01f, 0.03f);
     terrain->addModel("tree", "models/pohon/lowpoly_tree.obj");
-    terrain->generateObjects(100, "tree", 2.0f, 15.0f, 5.0f, 3.0f, 5.0f);
+    terrain->generateObjects(300, "tree", 2.0f, 15.0f, 5.0f, 3.0f, 5.0f);
     cout << "Terrain objects initialized!" << endl;
 
     player->SetPosition(glm::vec3(128 / 2, terrain->getHeightAt(128 / 2, 128 / 2), 128 / 2));
@@ -172,8 +172,8 @@ void GameController::initGame() {
     collectibleManager.addCollectible(glm::vec3(x, y, z - 2), "models/star/star.obj");
 
     for (int i = 0; i < 30; ++i) {
-        x = static_cast<float>(rand() % 128 - 20.0f) + 10;
-        z = static_cast<float>(rand() % 128 - 20.0f) + 10;
+        x = static_cast<float>(rand() % (256 - 20)) + 10;
+        z = static_cast<float>(rand() % (256 - 20)) + 10;
         y = terrain->getHeightAt(x, z);
         collectibleManager.addCollectible(glm::vec3(x, y, z), "models/star/star.obj");
         // std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;

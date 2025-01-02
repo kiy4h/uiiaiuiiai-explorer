@@ -65,8 +65,8 @@ void Terrain::generateTerrain() {
             vertices.push_back(z);      // Z
 
             // Scale texture coordinates to make the texture smaller (repeat it more times)
-            float u = (float)x / (terrainWidth - 1) * 30.0f;  // Repeat the texture 4 times in X direction
-            float v = (float)z / (terrainHeight - 1) * 30.0f; // Repeat the texture 4 times in Z direction
+            float u = (float)x / (terrainWidth - 1) * 27.0f;  // Repeat the texture n times in X direction
+            float v = (float)z / (terrainHeight - 1) * 27.0f; // Repeat the texture n times in Z direction
             texCoords.push_back(u);                           // U
             texCoords.push_back(v);                           // V
         }

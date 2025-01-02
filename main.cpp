@@ -103,7 +103,7 @@ int main() {
     cout << "Sound manager initialized!" << endl;
 
     // Initialize terrain
-    terrain = new Terrain("images/height-map.png", 5.0f, 128, 128);
+    terrain = new Terrain("images/height-map.png", 5.0f, 256, 256);
     // Initialize player
     player = new Model(FileSystem::getPath("models/oiiaioooooiai_cat/oiiaioooooiai_cat.obj"));
 
@@ -234,7 +234,7 @@ int main() {
         terrain->renderObjects(playerShader, vp, camera->Position);
         // Render the scoreboard
         std::string scoreText = "Score: " + std::to_string(gameController.getCollectedCount()) + "/" + std::to_string(collectibleManager.getTotalCount());
-        textRenderer.RenderText(textShader, scoreText, SCR_WIDTH - 150.0f, SCR_HEIGHT - 50.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // Top-right corner
+        textRenderer.RenderText(textShader, scoreText, SCR_WIDTH - 175.0f, SCR_HEIGHT - 50.0f, 1.0f, glm::vec3(1.0f, 1.0f, 1.0f)); // Top-right corner
 
         // Render timer
         float countdownTimer = gameController.getCountdownTimer();
