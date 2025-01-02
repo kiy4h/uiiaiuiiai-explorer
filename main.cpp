@@ -99,7 +99,7 @@ int main() {
     soundManager.loadBGM("audio/sad-moment.mp3", "lose");
     // Load sound effects
     soundManager.loadSoundEffect("collect", "audio/oiiiiiai beat drop.mp3");
-    soundManager.loadSoundEffect("footstep", "audio/oiiaioiiiai-mini.mp3");
+    soundManager.loadSoundEffect("footstep", "audio/oiiaiouiiai.mp3");
     cout << "Sound manager initialized!" << endl;
 
     // Initialize terrain
