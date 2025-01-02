@@ -129,19 +129,19 @@ void GameController::processInput(GLFWwindow *window, float deltaTime) {
 void GameController::initGame() {
     // Reset game state
     gameState = GameState::Initializing;
-    countdownTimer = 30.0f; // Set timer (e.g., 30 seconds)
+    countdownTimer = 60.0f; // Set timer (e.g., 30 seconds)
 
     // collectibleManager.clear();            // Clear all collectibles
-    collectibleManager.setCollectibles(2); // Set the number of collectibles
+    collectibleManager.setCollectibles(10); // Set the number of collectibles
 
     terrain->loadTexture("images/grass_green.png");
     terrain->addModel("grasstall", "models/grass_tall/grass_tall.obj");
-    terrain->generateObjects(500, "grasstall", 0.0f, 10.0f, 0.5f, 0.002f, 0.01f);
+    terrain->generateObjects(500, "grasstall", 0.0f, 10.0f, 0.5f, 0.001f, 0.007f);
     terrain->addModel("grass", "models/grass/grass.obj");
     terrain->generateObjects(500, "grass", 0.0f, 10.0f, 0.5f, 0.2f, 0.5f);
 
     terrain->addModel("fern_grass", "models/fern_grass/fern_grass.obj");
-    terrain->generateObjects(100, "fern_grass", 0.0f, 10.0f, 0.5f, 0.05f, 0.3f);
+    terrain->generateObjects(100, "fern_grass", 0.0f, 10.0f, 0.5f, 0.02f, 0.1f);
     terrain->addModel("bush", "models/bush/shrub.obj");
     terrain->generateObjects(100, "bush", 1.0f, 10.0f, 1.0f, 0.2f, 0.7f);
 
@@ -163,9 +163,9 @@ void GameController::initGame() {
     y = terrain->getHeightAt(x, z - 2);
     collectibleManager.addCollectible(glm::vec3(x, y, z - 2), "models/star/star.obj");
 
-    for (int i = 0; i < 5; ++i) {
-        x = static_cast<float>(rand() % terrain->getWidth());
-        z = static_cast<float>(rand() % terrain->getHeight());
+    for (int i = 0; i < 20; ++i) {
+        x = static_cast<float>(rand() % terrain->getWidth() - 20.0f) + 10;
+        z = static_cast<float>(rand() % terrain->getHeight() - 20.0f) + 10;
         y = terrain->getHeightAt(x, z);
         collectibleManager.addCollectible(glm::vec3(x, y, z), "models/star/star.obj");
         std::cout << "Collectibles -- x: " << x << ", z: " << z << std::endl;
@@ -181,10 +181,10 @@ void GameController::initGame() {
 void GameController::restartGame() {
     // restart game; do not regenerate terrain.
     gameState = GameState::Initializing; // Reset game state
-    countdownTimer = 30.0f;              // Set timer (e.g., 30 seconds)
+    countdownTimer = 60.0f;              // Set timer (e.g., 30 seconds)
     boostTimer = 0.0f;
 
-    collectibleManager.setCollectibles(2); // Set the number of collectibles
+    collectibleManager.setCollectibles(10); // Set the number of collectibles
 
     // Reset player position
     player->SetPosition(glm::vec3(128 / 2, terrain->getHeightAt(128 / 2, 128 / 2), 128 / 2));
